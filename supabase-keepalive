@@ -1,0 +1,36 @@
+# Memanggil Supabase sekali sehari supaya proyek paket gratis tidak dijeda
+# (Supabase menjeda proyek gratis setelah 1 minggu tanpa aktivitas).
+#
+# Butuh dua secret di repo: Settings -> Secrets and variables -> Actions
+#   SUPABASE_URL       contoh: https://abcdefghijkl.supabase.co
+#   SUPABASE_ANON_KEY  kunci publik proyek (anon / publishable), BUKAN service role
+name: Supabase keep-alive
+
+on:
+  schedule:
+    - cron: '17 1 * * *'   # setiap hari 01:17 UTC = 08:17 WIB
+  workflow_dispatch:        # bisa dijalankan manual dari tab Actions
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Panggil fungsi keepalive
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "Secret SUPABASE_URL / SUPABASE_ANON_KEY belum diisi."; exit 1
+          fi
+          curl --fail-with-body --silent --show-error \
+            --retry 3 --retry-delay 20 --retry-all-errors \
+            -X POST "${SUPABASE_URL%/}/rest/v1/rpc/keepalive" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{}'
+          echo
+          echo "Supabase aktif."
