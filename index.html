@@ -676,6 +676,7 @@
     }
     /* ============ v0.5.0 — PERHALUSAN TAMPILAN ============ */
     html { scroll-behavior: smooth; scrollbar-gutter: stable; }
+    a.btn { text-decoration: none; color: inherit; }
     .card { transition: box-shadow .25s var(--ease), border-color .25s; }
     .card:has(.input:focus) { border-color: color-mix(in srgb, var(--brand) 35%, var(--line)); }
     .card > h3:first-child, .card > .sub-h:first-child { margin-bottom: 4px; }
@@ -970,7 +971,7 @@
 /* KONFIGURASI server ada di js/config.js (dipakai juga oleh verifikasi.html). */
 const CONFIG = window.COA_CONFIG || { SUPABASE_URL: '', SUPABASE_KEY: '', API_URL: '', SCAN_QUEUE: 3 };
 // Naikkan setiap kali file ini diubah; tampil di halaman login dan dialog Keluar.
-const APP_VERSION = '0.5.0';
+const APP_VERSION = '0.6.0';
 const LIB = {
   qr: 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js',
   xlsx: 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'

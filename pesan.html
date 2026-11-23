@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#0f7a6c">
+  <title>Pemesanan</title>
+  <link rel="icon" href="img/origara.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <style>
+    /* Portal pemesanan TANPA akun (v0.6.0). Pelanggan dikenali dari kode link rahasia (?k=...).
+       Bisa: membuat Surat Pesanan, melihat status pesanannya, membatalkan yang belum diproses. */
+    :root {
+      --bg: #f2f5f4; --card: #ffffff; --soft: #f6f8f8; --line: #e1e7e6; --ink: #0e1a19; --ink-2: #4a5a58; --ink-3: #849391;
+      --brand: #0f7a6c; --brand-2: #14a08a; --brand-soft: #e2f3ef; --gold: #f6b93b; --on-brand: #fff;
+      --ok: #05875f; --ok-soft: #e3f6ee; --warn: #b45309; --warn-soft: #fdf2dc; --bad: #d92d20; --bad-soft: #fdeceb;
+      --shadow: 0 1px 2px rgba(14,26,25,.04), 0 12px 30px -16px rgba(14,26,25,.18);
+      --ease: cubic-bezier(.2,.8,.2,1);
+      color-scheme: light;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #0a1110; --card: #121b1a; --soft: #172322; --line: #233331; --ink: #e9f2f0; --ink-2: #aebfbc; --ink-3: #758784;
+        --brand: #3cc9a8; --brand-2: #62d9bc; --brand-soft: #10302a; --on-brand: #04140f;
+        --ok: #34d399; --ok-soft: #0f2c24; --warn: #fbbf24; --warn-soft: #2f2510; --bad: #ff7b72; --bad-soft: #351716;
+        --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 30px -16px rgba(0,0,0,.6);
+        color-scheme: dark;
+      }
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; font: 500 15px/1.5 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif; color: var(--ink); background: var(--bg); min-height: 100dvh; -webkit-font-smoothing: antialiased; }
+    h1, h2, h3, p { margin: 0; }
+    .mono { font-family: 'JetBrains Mono', ui-monospace, Consolas, monospace; letter-spacing: -.02em; }
+    .wrap { max-width: 860px; margin: 0 auto; padding: clamp(16px, 3vw, 32px) 16px 48px; }
+    header.top { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+    header.top img { width: 48px; height: 48px; object-fit: contain; border-radius: 12px; flex: none; }
+    header.top b { display: block; font-size: 17px; font-weight: 800; line-height: 1.25; }
+    header.top small { color: var(--ink-3); font-weight: 600; font-size: 13px; }
+    .hello { background: linear-gradient(135deg, #0f7a6c, #0b5e55); color: #fff; border-radius: 20px; padding: 20px 22px; margin-bottom: 16px; position: relative; overflow: hidden; }
+    .hello::after { content: ''; position: absolute; right: -40px; top: -40px; width: 160px; height: 160px; border-radius: 50%; border: 18px solid rgba(255,255,255,.08); }
+    .hello small { display: inline-flex; gap: 6px; align-items: center; font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; opacity: .8; }
+    .hello small::before { content: ''; width: 14px; height: 2px; background: var(--gold); border-radius: 2px; }
+    .hello h1 { font-size: clamp(20px, 3vw, 26px); font-weight: 800; letter-spacing: -.02em; margin-top: 4px; }
+    .hello p { opacity: .85; font-size: 14px; margin-top: 4px; }
+    .tabs { display: flex; gap: 4px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 4px; margin-bottom: 16px; position: sticky; top: 8px; z-index: 5; box-shadow: var(--shadow); }
+    .tabs button { flex: 1; height: 42px; border: 0; border-radius: 10px; background: transparent; color: var(--ink-2); font: inherit; font-weight: 700; cursor: pointer; display: inline-flex; gap: 8px; align-items: center; justify-content: center; transition: background .2s var(--ease), color .2s; }
+    .tabs button.on { background: var(--brand); color: var(--on-brand); }
+    .tabs .badge { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 99px; background: var(--gold); color: #3a2a00; font-size: 11.5px; display: inline-grid; place-items: center; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: clamp(16px, 2.6vw, 24px); box-shadow: var(--shadow); }
+    .view { display: grid; gap: 16px; animation: in .35s var(--ease); }
+    @keyframes in { from { opacity: 0; transform: translateY(8px); } }
+    .sec-h { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+    .sec-h h2 { font-size: 16px; font-weight: 800; display: flex; gap: 10px; align-items: center; }
+    .sec-h h2 i { color: var(--brand); }
+    .f { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+    .f > span { font-size: 12.5px; font-weight: 700; color: var(--ink-2); }
+    .g2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .g2 .w2 { grid-column: 1 / -1; }
+    .input { width: 100%; height: 46px; padding: 0 13px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: inherit; min-width: 0; transition: border-color .15s, box-shadow .15s; }
+    textarea.input { height: auto; min-height: 76px; padding: 10px 13px; resize: vertical; line-height: 1.45; }
+    .input:focus { outline: none; border-color: var(--brand); box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 18%, transparent); }
+    .input.bad { border-color: var(--bad); }
+    select.input { appearance: none; padding-right: 36px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%23849391' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 13px center; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 44px; padding: 0 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; white-space: nowrap; transition: transform .15s var(--ease), background .2s, border-color .2s, box-shadow .2s; -webkit-tap-highlight-color: transparent; }
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .5; cursor: wait; }
+    .btn.pri { background: var(--brand); border-color: var(--brand); color: var(--on-brand); box-shadow: 0 8px 18px -10px var(--brand); }
+    .btn.pri:hover { background: var(--brand-2); }
+    .btn.dash { border-style: dashed; background: transparent; color: var(--ink-2); width: 100%; }
+    .btn.dash:hover { color: var(--brand); border-color: var(--brand); background: var(--brand-soft); }
+    .btn.sm { height: 34px; padding: 0 12px; font-size: 13px; border-radius: 10px; }
+    .btn.icon { width: 44px; padding: 0; flex: none; }
+    .btn.t-bad:hover { color: var(--bad); border-color: var(--bad); background: var(--bad-soft); }
+    .btn.lg { height: 52px; font-size: 16px; padding: 0 22px; }
+    /* baris barang */
+    .rows { display: grid; gap: 10px; }
+    .it { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.1fr) minmax(0, .9fr) 96px 44px; gap: 8px; align-items: end; animation: in .25s var(--ease); }
+    .it .f > span { display: none; }
+    .it-head { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.1fr) minmax(0, .9fr) 96px 44px; gap: 8px; font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+    .sum { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 10px; font-size: 13px; color: var(--ink-3); }
+    .sum b { color: var(--brand); background: var(--brand-soft); padding: 4px 11px; border-radius: 99px; font-size: 13px; }
+    .divider { border: 0; border-top: 1px solid var(--line); margin: 20px 0; }
+    .foot-act { display: flex; justify-content: flex-end; margin-top: 20px; }
+    .msg { display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 14px; font-size: 14px; animation: in .3s var(--ease); }
+    .msg > i { font-size: 20px; margin-top: 1px; }
+    .msg > div > b { display: block; font-size: 15px; }
+    .sum b { white-space: nowrap; }
+    .msg.ok { background: var(--ok-soft); color: var(--ok); }
+    .msg.bad { background: var(--bad-soft); color: var(--bad); }
+    .msg.warn { background: var(--warn-soft); color: var(--warn); }
+    .hint { font-size: 12.5px; color: var(--ink-3); }
+    /* daftar pesanan */
+    .order { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: grid; gap: 10px; box-shadow: var(--shadow); animation: in .3s var(--ease); }
+    .order-h { display: flex; gap: 10px; align-items: flex-start; justify-content: space-between; }
+    .order-h b { font-size: 15px; }
+    .order-h small { display: block; color: var(--ink-3); font-size: 12.5px; }
+    .pill { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 10px; border-radius: 99px; font-size: 12px; font-weight: 800; white-space: nowrap; background: var(--soft); color: var(--ink-2); flex: none; }
+    .pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .pill.Diajukan { background: var(--warn-soft); color: var(--warn); }
+    .pill.Disetujui { background: var(--ok-soft); color: var(--ok); }
+    .pill.Ditolak { background: var(--bad-soft); color: var(--bad); }
+    .lines { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 13.5px; color: var(--ink-2); }
+    .lines li { display: flex; justify-content: space-between; gap: 10px; border-top: 1px dashed var(--line); padding-top: 4px; }
+    .lines li:first-child { border-top: 0; padding-top: 0; }
+    .bar { height: 8px; border-radius: 99px; background: var(--soft); overflow: hidden; border: 1px solid var(--line); margin-top: 4px; }
+    .bar > i { display: block; height: 100%; background: linear-gradient(90deg, var(--brand), var(--brand-2)); border-radius: 99px; transition: width .6s var(--ease); }
+    .steps { display: flex; gap: 6px; font-size: 12px; font-weight: 700; color: var(--ink-3); flex-wrap: wrap; }
+    .steps span { display: inline-flex; gap: 5px; align-items: center; }
+    .steps span.on { color: var(--brand); }
+    .empty { text-align: center; padding: 40px 16px; color: var(--ink-3); }
+    .empty i { font-size: 36px; opacity: .5; display: block; margin-bottom: 12px; }
+    .empty b { display: block; color: var(--ink); font-size: 16px; margin-bottom: 4px; }
+    .skel { height: 110px; border-radius: 16px; background: linear-gradient(90deg, var(--soft) 25%, var(--line) 50%, var(--soft) 75%); background-size: 200% 100%; animation: sh 1.2s linear infinite; }
+    @keyframes sh { to { background-position: -200% 0; } }
+    footer { text-align: center; color: var(--ink-3); font-size: 12.5px; margin-top: 28px; }
+    @media (max-width: 680px) {
+      .g2 { grid-template-columns: minmax(0, 1fr); }
+      .it-head { display: none; }
+      .it { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--soft); }
+      .it .f > span { display: block; }
+      .it .f.d { grid-column: 1 / -1; }
+      .it .f.q { grid-column: 1; }
+      .it > .btn { grid-column: 2; justify-self: end; }
+      .foot-act .btn { width: 100%; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top"><img id="logo" src="img/origara.png" alt=""><div><b id="comp">Portal Pemesanan</b><small id="compSub">Pemesanan tanpa akun</small></div></header>
+
+  <div id="app" hidden>
+    <section class="hello">
+      <small>Pemesanan untuk</small>
+      <h1 id="custName"></h1>
+      <p>Buat Surat Pesanan dan pantau statusnya di halaman ini. Simpan link ini, jangan dibagikan ke pihak lain.</p>
+    </section>
+
+    <nav class="tabs" role="tablist">
+      <button type="button" class="on" data-tab="new" role="tab"><i class="fa-solid fa-plus"></i> Buat pesanan</button>
+      <button type="button" data-tab="list" role="tab"><i class="fa-solid fa-list-check"></i> Status pesanan <span class="badge" id="nOpen" hidden></span></button>
+    </nav>
+
+    <!-- BUAT PESANAN -->
+    <section class="view" id="v-new">
+      <div id="okMsg"></div>
+      <form class="card" id="form" novalidate>
+        <div class="sec-h"><h2><i class="fa-solid fa-box"></i> Barang yang dipesan</h2></div>
+        <div class="it-head"><div>Deskripsi barang</div><div>Warna</div><div>Ukuran</div><div>Jumlah</div><div></div></div>
+        <div class="rows" id="rows"></div>
+        <button type="button" class="btn dash" id="addRow" style="margin-top:10px"><i class="fa-solid fa-plus"></i> Tambah baris</button>
+        <div class="sum"><span class="hint">Beda warna / ukuran = baris baru.</span><b id="sum">0 pcs</b></div>
+        <datalist id="dlDesc"></datalist>
+
+        <hr class="divider">
+        <div class="sec-h"><h2><i class="fa-solid fa-user"></i> Pemesan</h2></div>
+        <div class="g2">
+          <label class="f"><span>Nama pemesan *</span><input class="input" id="pemesan" autocomplete="name" placeholder="Nama Anda"></label>
+          <label class="f"><span>No. referensi Anda (opsional)</span><input class="input" id="ref" placeholder="mis. nomor PR / PO internal"></label>
+          <label class="f"><span>Tanggal dibutuhkan (opsional)</span><input class="input" id="butuh" type="date"></label>
+        </div>
+
+        <hr class="divider">
+        <div class="sec-h"><h2><i class="fa-solid fa-truck"></i> Dikirim ke</h2></div>
+        <div class="g2">
+          <label class="f w2"><span>Pilih alamat</span><select class="input" id="addr"></select></label>
+          <label class="f w2"><span>Nama penerima *</span><input class="input" id="penerima"></label>
+          <label class="f w2"><span>Alamat kirim *</span><textarea class="input" id="alamat" rows="2"></textarea></label>
+          <label class="f"><span>Attn</span><input class="input" id="attn"></label>
+          <label class="f"><span>Telepon</span><input class="input" id="telp" inputmode="tel"></label>
+          <label class="f w2"><span>Catatan</span><textarea class="input" id="catatan" rows="2" placeholder="mis. jam bongkar, permintaan khusus"></textarea></label>
+        </div>
+        <div id="errMsg" style="margin-top:14px"></div>
+        <div class="foot-act"><button type="submit" class="btn pri lg" id="send"><i class="fa-solid fa-paper-plane"></i> Kirim pesanan</button></div>
+      </form>
+    </section>
+
+    <!-- STATUS -->
+    <section class="view" id="v-list" hidden>
+      <div class="sec-h"><h2><i class="fa-solid fa-list-check"></i> Pesanan Anda</h2><button type="button" class="btn sm" id="reload"><i class="fa-solid fa-rotate"></i> Muat ulang</button></div>
+      <div id="list" style="display:grid;gap:12px"></div>
+    </section>
+  </div>
+
+  <div id="loading" style="display:grid;gap:14px"><div class="skel"></div><div class="skel" style="height:260px"></div></div>
+  <div id="fatal" hidden></div>
+  <footer id="foot">Powered by Origara</footer>
+</div>
+
+<script src="js/config.js"></script>
+<script>
+(function () {
+  'use strict';
+  const CONFIG = window.COA_CONFIG || {};
+  const Q = new URLSearchParams(location.search);
+  const UJI = Q.has('uji');
+  const KEY = (Q.get('k') || '').trim().toLowerCase();
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const e = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const fmt = n => Number(n || 0).toLocaleString('id-ID');
+  const dmy = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? `${m[3]}/${m[2]}/${m[1]}` : (iso || ''); };
+  const store = { get(k) { try { return localStorage.getItem(k) || ''; } catch (x) { return ''; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (x) {} } };
+  let info = null, orders = null;
+
+  function loadScript(src) {
+    return new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => no(new Error('Gagal memuat ' + src)); document.head.appendChild(s); });
+  }
+  async function api(action, ...args) {
+    const req = { action, args: [KEY, ...args] };
+    let res;
+    if (UJI) { if (!window.COA_MOCK) await loadScript('../uji/pglite-mock.js'); res = await window.COA_MOCK(req); }
+    else if (CONFIG.SUPABASE_URL) {
+      let r;
+      try {
+        r = await fetch(CONFIG.SUPABASE_URL.replace(/\/+$/, '') + '/rest/v1/rpc/coa_api', {
+          method: 'POST', headers: { 'Content-Type': 'application/json', apikey: CONFIG.SUPABASE_KEY }, body: JSON.stringify({ req }) });
+      } catch (x) { throw new Error('Tidak dapat terhubung ke server. Periksa koneksi internet Anda.'); }
+      res = await r.json();
+    } else throw new Error('Portal pemesanan belum terhubung ke server.');
+    if (!res || !res.ok) throw new Error((res && res.error) || 'Terjadi kesalahan.');
+    return res.data;
+  }
+  const msg = (type, icon, title, text) => `<div class="msg ${type}"><i class="fa-solid ${icon}"></i><div><b>${e(title)}</b>${text ? `<span>${text}</span>` : ''}</div></div>`;
+  function fatal(text) {
+    $('#app').hidden = true; $('#loading').hidden = true; $('#fatal').hidden = false;
+    $('#fatal').innerHTML = `<div class="card">${msg('bad', 'fa-link-slash', 'Link tidak bisa dipakai', e(text))}</div>`;
+  }
+
+  /* ---------- formulir ---------- */
+  const opts = (list, ph) => `<option value="">${ph}</option>` + list.map(x => `<option value="${e(x.id)}">${e(x.name)}</option>`).join('');
+  function rowHTML(it = {}) {
+    return `<div class="it">
+      <label class="f d"><span>Deskripsi barang</span><input class="input r-desc" list="dlDesc" value="${e(it.deskripsi)}" placeholder="Deskripsi barang"></label>
+      <label class="f"><span>Warna</span><select class="input r-warna">${opts(info.warna, 'Warna')}</select></label>
+      <label class="f"><span>Ukuran</span><select class="input r-size">${opts(info.ukuran, 'Ukuran')}</select></label>
+      <label class="f q"><span>Jumlah</span><input class="input r-qty" type="number" min="1" inputmode="numeric" placeholder="Qty"></label>
+      <button type="button" class="btn icon t-bad" data-del aria-label="Hapus baris"><i class="fa-solid fa-trash"></i></button>
+    </div>`;
+  }
+  function addRow(copy) {
+    $('#rows').insertAdjacentHTML('beforeend', rowHTML(copy ? { deskripsi: $('.r-desc', copy).value } : {}));
+    const r = $('#rows .it:last-child');
+    if (copy) { $('.r-warna', r).value = $('.r-warna', copy).value; $('.r-size', r).focus(); }
+    sum();
+  }
+  function sum() {
+    const n = $$('.r-qty').reduce((a, i) => a + (parseInt(i.value, 10) || 0), 0);
+    $('#sum').textContent = `${$$('#rows .it').length} baris · ${fmt(n)} pcs`;
+  }
+  function fillAddr() {
+    const c = info.pelanggan, v = $('#addr').value;
+    const k = v[0] === 'k' ? c.kirim[+v.slice(1)] : v === 'tagih' ? { alamat: c.alamatTagih, attn: c.up, telp: c.telp } : { alamat: '', attn: '', telp: '' };
+    $('#alamat').value = k.alamat || ''; $('#attn').value = k.attn || ''; $('#telp').value = k.telp || '';
+  }
+  function resetForm() {
+    $('#rows').innerHTML = ''; addRow();
+    ['ref', 'butuh', 'catatan'].forEach(id => $('#' + id).value = '');
+    $('#penerima').value = info.pelanggan.nama; $('#addr').selectedIndex = 0; fillAddr();
+    $('#errMsg').innerHTML = '';
+  }
+  function collect() {
+    $$('.input.bad').forEach(x => x.classList.remove('bad'));
+    const bad = (el, text) => { el.classList.add('bad'); el.focus(); throw new Error(text); };
+    const items = $$('#rows .it').map((r, i) => {
+      const it = { deskripsi: $('.r-desc', r).value.trim(), idWarna: $('.r-warna', r).value, idUkuran: $('.r-size', r).value, qty: parseInt($('.r-qty', r).value, 10) || 0 };
+      if (!it.deskripsi) bad($('.r-desc', r), `Isi deskripsi barang baris ke-${i + 1}.`);
+      if (!it.idWarna) bad($('.r-warna', r), `Pilih warna barang baris ke-${i + 1}.`);
+      if (!it.idUkuran) bad($('.r-size', r), `Pilih ukuran barang baris ke-${i + 1}.`);
+      if (it.qty < 1) bad($('.r-qty', r), `Isi jumlah barang baris ke-${i + 1} (minimal 1).`);
+      return it;
+    });
+    const v = id => $('#' + id).value.trim();
+    if (!v('pemesan')) bad($('#pemesan'), 'Isi nama pemesan.');
+    if (!v('penerima')) bad($('#penerima'), 'Isi nama penerima.');
+    if (!v('alamat')) bad($('#alamat'), 'Isi alamat kirim.');
+    return { pemesan: v('pemesan'), items, refPelanggan: v('ref'), tglButuh: v('butuh'), penerima: v('penerima'), alamat: v('alamat'),
+             attn: v('attn'), telp: v('telp'), catatan: v('catatan') };
+  }
+  async function submit(ev) {
+    ev.preventDefault();
+    $('#errMsg').innerHTML = '';
+    let data;
+    try { data = collect(); } catch (x) { $('#errMsg').innerHTML = msg('bad', 'fa-circle-exclamation', x.message); return; }
+    const b = $('#send'); b.disabled = true;
+    try {
+      const r = await api('linkSave', data);
+      store.set('origara_pemesan', data.pemesan);
+      $('#okMsg').innerHTML = msg('ok', 'fa-circle-check', `Pesanan ${r.no} terkirim`, 'Terima kasih. Kami akan segera memprosesnya. Statusnya bisa dipantau di tab <b>Status pesanan</b>.');
+      resetForm(); window.scrollTo({ top: 0, behavior: 'smooth' });
+      orders = null; loadList(true);
+    } catch (x) { $('#errMsg').innerHTML = msg('bad', 'fa-circle-exclamation', x.message); }
+    finally { b.disabled = false; }
+  }
+
+  /* ---------- status pesanan ---------- */
+  const STEP = ['Diajukan', 'Disetujui', 'Diproduksi'];
+  function orderHTML(s) {
+    const pr = s.progres || { target: 0, selesai: 0 };
+    const pct = pr.target ? Math.min(100, Math.round(pr.selesai * 100 / pr.target)) : 0;
+    const total = s.items.reduce((a, i) => a + i.qty, 0);
+    const lvl = s.status === 'Disetujui' ? (pr.selesai > 0 ? 3 : 2) : s.status === 'Diajukan' ? 1 : 0;
+    const label = { Diajukan: 'Menunggu diproses', Disetujui: 'Disetujui', Ditolak: 'Ditolak', Dibatalkan: 'Dibatalkan' }[s.status] || s.status;
+    return `<article class="order" data-no="${e(s.no)}">
+      <div class="order-h"><div><b class="mono">${e(s.no)}</b><small>${e(dmy(s.tanggal))} · ${fmt(total)} pcs${s.refPelanggan ? ' · Ref ' + e(s.refPelanggan) : ''}${s.tglButuh ? ' · dibutuhkan ' + e(dmy(s.tglButuh)) : ''}</small></div>
+        <span class="pill ${e(s.status)}">${e(label)}</span></div>
+      ${lvl ? `<div class="steps">${STEP.map((t, i) => `<span class="${i < lvl ? 'on' : ''}"><i class="fa-solid ${i < lvl ? 'fa-circle-check' : 'fa-circle'}"></i> ${t}</span>`).join('<span>›</span>')}</div>` : ''}
+      <ul class="lines">${s.items.map(i => `<li><span>${e(i.deskripsi)} · ${e(i.warna)} · ${e(i.ukuran)}</span><b>${fmt(i.qty)}</b></li>`).join('')}</ul>
+      ${s.status === 'Disetujui' ? `<div><small class="hint">No. PO ${e(s.noPO)} · produksi ${fmt(pr.selesai)} / ${fmt(pr.target)} pcs</small><div class="bar"><i style="width:${pct}%"></i></div></div>` : ''}
+      ${s.status === 'Ditolak' ? msg('bad', 'fa-circle-info', 'Alasan', e(s.alasan || '-')) : ''}
+      <small class="hint">Kirim ke ${e(s.penerima)} · dipesan oleh ${e(String(s.dibuatOleh || '').replace(/ \(link pesanan\)$/, ''))}</small>
+      ${s.status === 'Diajukan' ? '<div style="display:flex;justify-content:flex-end"><button type="button" class="btn sm t-bad" data-cancel><i class="fa-solid fa-xmark"></i> Batalkan pesanan</button></div>' : ''}
+    </article>`;
+  }
+  function renderList() {
+    const list = orders || [];
+    const open = list.filter(s => s.status === 'Diajukan').length;
+    $('#nOpen').hidden = !open; $('#nOpen').textContent = open;
+    $('#list').innerHTML = list.length ? list.map(orderHTML).join('')
+      : '<div class="card empty"><i class="fa-solid fa-cart-shopping"></i><b>Belum ada pesanan</b>Pesanan yang Anda kirim akan muncul di sini.</div>';
+  }
+  async function loadList(quiet) {
+    if (!quiet && !orders) $('#list').innerHTML = '<div class="skel"></div><div class="skel"></div>';
+    try { orders = await api('linkList'); renderList(); }
+    catch (x) { if (!quiet) $('#list').innerHTML = msg('bad', 'fa-circle-exclamation', x.message); }
+  }
+  async function cancel(no) {
+    const why = prompt(`Batalkan pesanan ${no}? Tulis alasan (boleh kosong):`, '');
+    if (why === null) return;
+    try { await api('linkCancel', no, why); await loadList(true); }
+    catch (x) { alert(x.message); }
+  }
+
+  /* ---------- mulai ---------- */
+  function tab(t) {
+    $$('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+    $('#v-new').hidden = t !== 'new'; $('#v-list').hidden = t !== 'list';
+    if (t === 'list') loadList();
+  }
+  async function start() {
+    if (!/^[0-9a-f]{64}$/.test(KEY)) return fatal('Alamat link tidak lengkap. Buka lagi link pemesanan yang Anda terima, atau hubungi kami.');
+    try { info = await api('linkInfo'); }
+    catch (x) { return fatal(x.message); }
+    const p = info.perusahaan || {};
+    if (p.nama) { $('#comp').textContent = p.nama; $('#compSub').textContent = 'Portal pemesanan'; document.title = 'Pemesanan · ' + p.nama; $('#foot').textContent = `© ${new Date().getFullYear()} ${p.nama} · Powered by Origara`; }
+    if (info.logo) $('#logo').src = info.logo;
+    const c = info.pelanggan;
+    $('#custName').textContent = c.nama;
+    $('#dlDesc').innerHTML = (info.deskripsi || []).map(x => `<option value="${e(x)}"></option>`).join('');
+    $('#addr').innerHTML = [...(c.kirim || []).map((k, i) => `<option value="k${i}">${e(k.label || 'Alamat kirim ' + (i + 1))}</option>`),
+      c.alamatTagih ? '<option value="tagih">Alamat kantor / penagihan</option>' : '', '<option value="manual">Ketik alamat lain</option>'].join('');
+    $('#pemesan').value = store.get('origara_pemesan');
+    $('#butuh').min = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    resetForm();
+    $('#loading').hidden = true; $('#app').hidden = false;
+    loadList(true);
+  }
+
+  $('#addRow').onclick = () => addRow($('#rows .it:last-child'));
+  $('#rows').addEventListener('click', ev => { const b = ev.target.closest('[data-del]'); if (b && $$('#rows .it').length > 1) { b.closest('.it').remove(); sum(); } });
+  $('#rows').addEventListener('input', sum);
+  $('#addr').onchange = fillAddr;
+  $('#form').onsubmit = submit;
+  $$('.tabs button').forEach(b => b.onclick = () => tab(b.dataset.tab));
+  $('#reload').onclick = () => loadList();
+  $('#list').addEventListener('click', ev => { if (ev.target.closest('[data-cancel]')) cancel(ev.target.closest('[data-no]').dataset.no); });
+  start();
+})();
+</script>
+</body>
+</html>

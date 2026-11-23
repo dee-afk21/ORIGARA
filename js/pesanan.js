@@ -264,7 +264,7 @@
       </div>
       <div class="chips" id="spChips"></div>
       <div class="card list" id="spList"></div>
-      <p class="hint">Akun pelanggan dibuat di menu User (role "Pelanggan", pilih pelanggannya). Setelah disetujui, Surat Pesanan menjadi PO dan bisa langsung di-scan.</p>
+      <p class="hint">Pelanggan memesan lewat <b>link pesanan</b> (menu Pelanggan → ikon <i class="fa-solid fa-link"></i>, tanpa akun) atau akun pelanggan (menu User, role "Pelanggan"). Setelah disetujui, Surat Pesanan menjadi PO dan bisa langsung di-scan.</p>
     </section>`;
 
   function bind() {
