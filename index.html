@@ -7,9 +7,9 @@
   <meta name="theme-color" content="#0e1424">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Register COA">
+  <meta name="apple-mobile-web-app-title" content="Origara">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>System Register COA</title>
+  <title>Origara</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f46e5'/%3E%3Cpath d='M8 8h6v6H8zM18 8h6v6h-6zM8 18h6v6H8zM18 18h3v3h-3zM21 21h3v3h-3z' fill='%23fff'/%3E%3C/svg%3E">
@@ -22,7 +22,7 @@
     :root {
       --bg: #f2f4f8; --surface: #ffffff; --surface-2: #f7f8fb; --line: #e3e7ef;
       --ink: #0e1424; --ink-2: #4b556b; --ink-3: #8690a5;
-      --brand: #4f46e5; --brand-2: #6d5efc; --on-brand: #ffffff; --brand-soft: #eef0ff;
+      --brand: #0f7a6c; --brand-2: #14a08a; --on-brand: #ffffff; --brand-soft: #e2f3ef; --gold: #f6b93b;
       --ok: #05875f; --ok-soft: #e3f6ee; --warn: #b45309; --warn-soft: #fdf2dc;
       --bad: #d92d20; --bad-soft: #fdeceb; --info: #0b6aa8; --info-soft: #e2f1fb;
       --side: #0e1424; --side-ink: #c5cbdb; --side-line: rgba(255,255,255,.08);
@@ -37,7 +37,7 @@
     :root[data-theme="dark"] {
       --bg: #0a0e19; --surface: #131a2a; --surface-2: #182135; --line: #242e45;
       --ink: #eef1f8; --ink-2: #adb6ca; --ink-3: #717c95;
-      --brand: #8b93ff; --brand-2: #a5abff; --on-brand: #0a0e19; --brand-soft: #1e2447;
+      --brand: #3cc9a8; --brand-2: #62d9bc; --on-brand: #04140f; --brand-soft: #10302a;
       --ok: #34d399; --ok-soft: #0f2c24; --warn: #fbbf24; --warn-soft: #2f2510;
       --bad: #ff7b72; --bad-soft: #351716; --info: #56c2f7; --info-soft: #0e293b;
       --side: #070a12; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.6);
@@ -53,7 +53,7 @@
     h1 { font-size: 22px; font-weight: 800; letter-spacing: -.02em; }
     h2 { font-size: 17px; font-weight: 700; letter-spacing: -.01em; }
     h3 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); }
-    button, input, select { font: inherit; color: inherit; }
+    button, input, select, textarea { font: inherit; color: inherit; }
     .mono { font-family: var(--mono); font-weight: 500; letter-spacing: -.02em; }
     .muted { color: var(--ink-3); }
     .num { font-variant-numeric: tabular-nums; }
@@ -124,16 +124,16 @@
     #toasts { position: fixed; z-index: 400; right: 20px; bottom: 20px; display: flex; flex-direction: column; gap: 10px; width: min(380px, calc(100vw - 32px)); pointer-events: none; }
     .toast { pointer-events: auto; display: flex; gap: 12px; align-items: flex-start; padding: 13px 15px; border-radius: 13px; background: var(--ink); color: var(--bg); box-shadow: var(--shadow-lg); animation: pop .3s var(--ease); font-size: 14px; transition: opacity .25s, transform .25s; }
     .toast i { margin-top: 3px; }
-    .toast.ok i { color: #34d399; } .toast.bad i { color: #ff7b72; } .toast.info i { color: #8b93ff; }
+    .toast.ok i { color: #34d399; } .toast.bad i { color: #ff7b72; } .toast.info i { color: #3cc9a8; }
     .toast.out { opacity: 0; transform: translateY(8px); }
 
     /* ============ LOGIN ============ */
     .login { min-height: 100dvh; display: grid; grid-template-columns: 1.1fr 1fr; }
-    .login-art { position: relative; overflow: hidden; background: radial-gradient(1200px 600px at 10% 10%, #2b2a8c 0%, transparent 60%), radial-gradient(900px 600px at 90% 90%, #0f5e6e 0%, transparent 55%), #0e1424; color: #fff; padding: 48px; display: flex; flex-direction: column; justify-content: space-between; }
+    .login-art { position: relative; overflow: hidden; background: radial-gradient(1200px 600px at 10% 10%, #0e6b5f 0%, transparent 60%), radial-gradient(900px 600px at 90% 90%, #7a5b10 0%, transparent 55%), #0b1614; color: #fff; padding: 48px; display: flex; flex-direction: column; justify-content: space-between; }
     .login-art::before { content: ''; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px); background-size: 44px 44px; mask-image: radial-gradient(circle at 60% 50%, #000, transparent 75%); }
     .login-art > * { position: relative; }
     .brand { display: flex; align-items: center; gap: 12px; }
-    .logo { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: linear-gradient(135deg, #6d5efc, #4f46e5); color: #fff; font-size: 18px; box-shadow: 0 8px 20px -8px #4f46e5; flex: none; }
+    .logo { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: transparent; color: #fff; font-size: 18px; flex: none; overflow: hidden; } .logo img { width: 100%; height: 100%; display: block; }
     .brand b { display: block; font-weight: 800; letter-spacing: -.01em; line-height: 1.2; }
     .brand small { color: var(--side-ink); font-size: 12px; opacity: .75; }
     .login-art h1 { font-size: clamp(30px, 3.4vw, 46px); line-height: 1.1; max-width: 13em; }
@@ -159,15 +159,45 @@
     .app { display: grid; grid-template-columns: 236px minmax(0, 1fr); min-height: 100dvh; }
     .side { background: var(--side); color: var(--side-ink); padding: 22px 16px; display: flex; flex-direction: column; gap: 26px; position: sticky; top: 0; height: 100dvh; }
     .side .brand b { color: #fff; }
-    .nav { display: flex; flex-direction: column; gap: 4px; flex: 1; }
-    .nav button { display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 14px; border: 0; border-radius: 11px; background: transparent; color: inherit; font-weight: 600; cursor: pointer; text-align: left; transition: background .15s, color .15s, transform .15s var(--ease); position: relative; }
-    .nav button i { width: 18px; text-align: center; opacity: .8; }
-    .nav button:hover { background: rgba(255,255,255,.06); color: #fff; }
-    .nav button.on { background: rgba(255,255,255,.1); color: #fff; }
-    .nav button.on::before { content: ''; position: absolute; left: -16px; top: 10px; bottom: 10px; width: 4px; border-radius: 0 4px 4px 0; background: #8b93ff; }
-    .nav-label { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; opacity: .5; padding: 14px 14px 6px; font-weight: 700; }
+    /* Menu bisa di-scroll sendiri bila tidak muat di layar; logo & akun di bawah tetap terlihat. */
+    .nav { display: flex; flex-direction: column; gap: 2px; flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+           margin: 0 -16px; padding: 0 16px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.18) transparent; }
+    .nav::-webkit-scrollbar { width: 6px; }
+    .nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 6px; }
+    .nav button { flex: none; }
+    @media (max-height: 820px) { .side { gap: 16px; padding-top: 16px; padding-bottom: 14px; } .nav [data-go] { height: 38px; } }
+    /* v0.5.0: menu per grup, judul grup bisa diklik untuk melipat / membuka */
+    .nav-grp { display: flex; flex-direction: column; }
+    .nav-grp + .nav-grp { margin-top: 6px; }
+    .nav [data-go] { display: flex; align-items: center; gap: 12px; width: 100%; height: 40px; padding: 0 12px 0 14px; border: 0; border-radius: 10px; background: transparent; color: inherit; font-weight: 600; font-size: 14px; cursor: pointer; text-align: left; transition: background .2s var(--ease), color .2s, padding .2s var(--ease); position: relative; }
+    .nav [data-go] i { width: 18px; text-align: center; opacity: .75; transition: opacity .2s, transform .2s var(--ease); }
+    .nav [data-go] span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .nav [data-go]:hover { background: rgba(255,255,255,.06); color: #fff; }
+    .nav [data-go]:hover i { opacity: 1; transform: scale(1.08); }
+    .nav [data-go].on { background: linear-gradient(90deg, rgba(20,160,138,.28), rgba(20,160,138,.08)); color: #fff; }
+    .nav [data-go].on i { opacity: 1; color: #62d9bc; }
+    .nav [data-go].on::before { content: ''; position: absolute; left: -16px; top: 9px; bottom: 9px; width: 4px; border-radius: 0 4px 4px 0; background: var(--gold); animation: grow .3s var(--ease); }
+    @keyframes grow { from { transform: scaleY(0); } }
+    .nav-label { display: flex; align-items: center; gap: 10px; width: 100%; height: 34px; padding: 0 12px 0 14px; border: 0; border-radius: 9px; background: transparent; color: inherit; cursor: pointer; font: inherit; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; opacity: .55; transition: opacity .2s, background .2s; }
+    .nav-label:hover { opacity: .95; background: rgba(255,255,255,.04); }
+    .nav-label > i:first-child { width: 18px; text-align: center; font-size: 12px; }
+    .nav-label span { flex: 1; text-align: left; }
+    .nav-caret { font-size: 10px; transition: transform .25s var(--ease); }
+    .nav-grp.cur .nav-label { opacity: .9; color: #fff; }
+    .nav-grp.fold .nav-caret { transform: rotate(-90deg); }
+    /* animasi lipat yang halus: grid 1fr <-> 0fr */
+    .nav-items { display: grid; grid-template-rows: 1fr; transition: grid-template-rows .28s var(--ease), opacity .2s; }
+    .nav-items > div { overflow: hidden; display: flex; flex-direction: column; gap: 2px; min-height: 0; }
+    .nav-grp.fold .nav-items { grid-template-rows: 0fr; opacity: 0; }
+    .side-head { display: flex; align-items: center; gap: 8px; }
+    .side-head .brand { flex: 1; min-width: 0; }
+    .side-head .brand > div { min-width: 0; }
+    .side-head .brand small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rail-btn { color: var(--side-ink); width: 32px; height: 32px; opacity: .6; }
+    .rail-btn:hover { opacity: 1; background: rgba(255,255,255,.08) !important; color: #fff; }
+    .rail-btn i { transition: transform .3s var(--ease); }
     .side-foot { border-top: 1px solid var(--side-line); padding-top: 16px; display: flex; align-items: center; gap: 10px; }
-    .avatar { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(135deg, #6d5efc, #0f8f9e); color: #fff; font-weight: 800; font-size: 14px; flex: none; }
+    .avatar { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(135deg, #14a08a, #0b5e55); color: #fff; font-weight: 800; font-size: 14px; flex: none; }
     .who { flex: 1; min-width: 0; line-height: 1.25; }
     .who b { display: block; color: #fff; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .who small { font-size: 12px; opacity: .7; }
@@ -177,13 +207,41 @@
     .install-side:hover { background: rgba(255,255,255,.12); }
 
     .main { min-width: 0; display: flex; flex-direction: column; }
-    .top { display: flex; align-items: center; gap: 12px; padding: 22px 28px 6px; }
+    /* v0.5.0: jarak tepi ikut lebar layar (fluid), konten dibatasi agar tidak terlalu melebar di monitor besar */
+    :root { --gut: clamp(16px, 2.4vw, 36px); --content: 1480px; }
+    .top { display: flex; align-items: center; gap: 12px; padding: 18px var(--gut) 14px; position: sticky; top: 0; z-index: 40;
+           background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: saturate(1.4) blur(14px); -webkit-backdrop-filter: saturate(1.4) blur(14px);
+           border-bottom: 1px solid transparent; transition: border-color .25s, box-shadow .25s; }
+    .scrolled .top { border-bottom-color: var(--line); box-shadow: 0 8px 24px -20px rgba(14,20,36,.4); }
     .top .logo, .top .m-only { display: none; }
     .top-t { flex: 1; min-width: 0; }
-    .top-t p { color: var(--ink-3); font-size: 13.5px; }
+    .top-t h1 { font-size: clamp(19px, 1.2vw + 12px, 24px); line-height: 1.2; }
+    .top-t p { color: var(--ink-3); font-size: 13.5px; margin-top: 2px; }
+    .eyebrow { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: var(--brand); margin-bottom: 2px; }
+    .eyebrow::before { content: ''; width: 14px; height: 2px; border-radius: 2px; background: var(--gold); }
     .demo-badge { background: var(--warn-soft); color: var(--warn); font-size: 12px; font-weight: 700; padding: 5px 10px; border-radius: 99px; }
-    .pages { padding: 18px 28px 40px; flex: 1; }
-    .page { animation: rise .4s var(--ease); display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; align-content: start; }
+    .pages { padding: 10px var(--gut) 48px; flex: 1; width: 100%; max-width: calc(var(--content) + 2 * var(--gut)); }
+    .page { display: grid; grid-template-columns: minmax(0, 1fr); gap: clamp(14px, 1.4vw, 20px); align-content: start; }
+    .page.enter { animation: pageIn .38s var(--ease) both; }
+    @keyframes pageIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    /* Panel menu ramping (desktop): hanya ikon, lebar menyesuaikan dengan halus */
+    .app { transition: grid-template-columns .3s var(--ease); }
+    .app.rail { grid-template-columns: 76px minmax(0, 1fr); }
+    .app.rail .side { padding-left: 12px; padding-right: 12px; }
+    .app.rail .nav { margin: 0 -12px; padding: 0 12px; }
+    .app.rail .side-head { flex-direction: column; }
+    .app.rail .brand > div, .app.rail .nav span, .app.rail .nav-caret, .app.rail .who, .app.rail .install-side span { display: none; }
+    .app.rail .brand { justify-content: center; }
+    .app.rail .rail-btn i { transform: rotate(180deg); }
+    .app.rail .nav [data-go], .app.rail .nav-label { justify-content: center; padding: 0; }
+    .app.rail .nav [data-go].on::before { left: -12px; }
+    .app.rail .nav-label { height: 18px; pointer-events: none; }
+    .app.rail .nav-label > i:first-child { display: none; }
+    .app.rail .nav-label::after { content: ''; width: 22px; height: 1px; background: var(--side-line); }
+    .app.rail .nav-grp.fold .nav-items { grid-template-rows: 1fr; opacity: 1; }
+    .app.rail .side-foot { flex-direction: column; }
+    .app.rail .install-side { padding: 0; }
     .tabbar { display: none; }
 
     /* ============ SCAN PAGE ============ */
@@ -322,10 +380,20 @@
     .fields .f.w3 { grid-column: span 3; }
     .items-head { display: flex; align-items: center; justify-content: space-between; margin: 26px 0 10px; padding-top: 20px; border-top: 1px solid var(--line); }
     .total-pill { font-weight: 700; color: var(--brand); background: var(--brand-soft); padding: 5px 12px; border-radius: 99px; font-size: 13px; font-variant-numeric: tabular-nums; }
-    .irow { display: grid; grid-template-columns: 2.2fr 1.3fr 1fr 110px 42px; gap: 8px; align-items: end; margin-bottom: 8px; animation: rise .25s var(--ease); }
+    .irow { display: grid; grid-template-columns: 2.1fr 1.2fr .8fr 90px 140px 140px 42px; gap: 8px; align-items: end; margin-bottom: 8px; animation: rise .25s var(--ease); }
     .irow.head { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-3); margin-bottom: 6px; animation: none; }
     .irow .f > span { display: none; }
+    .irow:not(.head) { padding-bottom: 10px; border-bottom: 1px dashed var(--line); margin-bottom: 10px; }
+    .irow .amt { grid-column: 1 / -1; text-align: right; font-size: 12px; color: var(--ink-3); margin-top: -2px; }
+    .irow .amt:empty { display: none; }
+    .irow .amt b { margin-left: 8px; font-size: 13.5px; color: var(--ink); }
     .irow-note { grid-column: 1 / -1; color: var(--ink-3); font-size: 12px; margin-top: -2px; }
+    .rp { position: relative; }
+    .rp::before { content: 'Rp'; position: absolute; left: 11px; top: 50%; transform: translateY(-50%); font-size: 12.5px; font-weight: 700; color: var(--ink-3); pointer-events: none; }
+    .rp .input { padding-left: 36px; text-align: right; }
+    textarea.input { height: auto; min-height: 84px; padding: 10px 13px; resize: vertical; line-height: 1.45; }
+    .with-btn { display: flex; gap: 6px; }
+    .with-btn .input { flex: 1; }
     .form-foot { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
 
     /* ============ MASTER + USERS ============ */
@@ -378,6 +446,83 @@
     .opt-r b { display: block; font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; }
     .opt-r small { color: var(--ink-3); font-size: 11.5px; }
 
+    /* ============ MENU LENGKAP (HP) ============ */
+    .menu-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .menu-grp { grid-column: 1 / -1; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); margin-top: 6px; }
+    .menu-grid button { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 6px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-2); font: inherit; font-size: 12.5px; font-weight: 700; color: var(--ink); cursor: pointer; text-align: center; }
+    .menu-grid button i { font-size: 19px; color: var(--brand); }
+    .menu-grid button.on { border-color: var(--brand); background: var(--brand-soft); }
+
+    /* ============ HALAMAN DATA & SISTEM ============ */
+    .grid-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+    .rec { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 15px 16px; display: grid; gap: 8px; min-width: 0; align-content: start; }
+    .rec.off { opacity: .6; }
+    .rec-h { display: flex; gap: 10px; align-items: flex-start; }
+    .rec-h .t { flex: 1; min-width: 0; line-height: 1.3; }
+    .rec-h .t b { display: block; font-size: 15px; overflow-wrap: anywhere; }
+    .rec-h .t small { color: var(--ink-3); font-size: 12.5px; }
+    .rec-h .acts { display: flex; gap: 6px; flex: none; }
+    .rec p { font-size: 13px; color: var(--ink-2); white-space: pre-line; overflow-wrap: anywhere; }
+    .rec .tags { display: flex; gap: 6px; flex-wrap: wrap; }
+    .tag { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--line); color: var(--ink-2); max-width: 100%; overflow-wrap: anywhere; }
+    .tag.warn { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+    .tag.ok { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
+    .f2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .f2 .w2 { grid-column: 1 / -1; }
+    .sub-h { font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); margin-top: 6px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .addr { border: 1px solid var(--line); border-radius: 12px; padding: 10px; display: grid; gap: 8px; background: var(--surface-2); }
+    .addr-h { display: flex; gap: 8px; align-items: center; }
+    .addr-h .input { flex: 1; }
+    .hint { font-size: 12px; color: var(--ink-3); font-weight: 500; }
+    .switch { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; font-size: 14px; cursor: pointer; }
+    .switch input { width: 18px; height: 18px; accent-color: var(--brand); }
+    .perm-grp { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: grid; gap: 4px; }
+    .perm-grp > b { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 2px; }
+    .perm-grp label { display: flex; gap: 10px; align-items: center; padding: 5px 2px; font-size: 14px; cursor: pointer; }
+    .perm-grp input { width: 18px; height: 18px; accent-color: var(--brand); flex: none; }
+    .stats.s3 { grid-template-columns: repeat(3, 1fr); }
+    .imgs { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+    .img-card { display: grid; gap: 10px; align-content: start; }
+    .img-box { height: 140px; border-radius: 12px; border: 1px dashed var(--line); background: #fff; display: grid; place-items: center; overflow: hidden; padding: 8px; }
+    .img-box img { max-width: 100%; max-height: 122px; object-fit: contain; }
+    .ctr { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.5fr) 110px 180px auto; gap: 10px; align-items: end; padding: 14px 0; border-top: 1px solid var(--line); }
+    .ctr:first-of-type { border-top: 0; }
+    .ctr .nm b { display: block; }
+    .ctr .nm small { color: var(--ink-3); font-size: 12.5px; }
+    .ctr .nxt { grid-column: 1 / -1; font-size: 13px; color: var(--ink-2); margin-top: -2px; }
+    .ctr .nxt b { font-family: var(--mono); color: var(--brand); }
+    .codes { display: flex; flex-wrap: wrap; gap: 6px; font-size: 12.5px; }
+    .codes code { background: var(--surface-2); border: 1px solid var(--line); border-radius: 7px; padding: 2px 7px; font-family: var(--mono); }
+    .progress-line { font-size: 13px; color: var(--ink-2); }
+    .cert-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 18px; align-items: start; }
+    .cert-side { position: sticky; top: 16px; }
+    .cert-prev { position: relative; overflow: hidden; border-radius: 10px; border: 1px solid var(--line); background: #fff; }
+    .cert-prev iframe { position: absolute; left: 0; top: 0; width: 1123px; height: 794px; border: 0; transform-origin: 0 0; pointer-events: none; }
+    .cf-list { display: grid; gap: 6px; }
+    .cf { display: grid; grid-template-columns: 22px minmax(0, 1fr) 92px auto; gap: 6px; align-items: center; }
+    .cf .input { height: 38px; }
+    .cf-on { width: 18px; height: 18px; accent-color: var(--brand); }
+    .cf-mv { display: flex; }
+    .cf-src { grid-column: 2 / -1; margin-top: -4px; }
+    @media (max-width: 1080px) { .cert-grid { grid-template-columns: minmax(0, 1fr); } .cert-side { position: static; order: -1; } }
+    .sp-row { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, .8fr) 90px 42px; gap: 6px; }
+    @media (max-width: 640px) { .sp-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }
+      .sp-row .s-desc { grid-column: 1 / -1; } .sp-row > .btn { justify-self: end; } }
+    .rtable { overflow-x: auto; margin-top: 10px; border: 1px solid var(--line); border-radius: 12px; }
+    .rtable table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    .rtable th { text-align: left; font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-3); padding: 9px 12px; background: var(--surface-2); white-space: nowrap; }
+    .rtable td { padding: 9px 12px; border-top: 1px solid var(--line); white-space: nowrap; }
+    .rtable .r { text-align: right; font-variant-numeric: tabular-nums; }
+    .rtable tfoot td { font-weight: 800; background: var(--surface-2); }
+    .rtable .warn { color: var(--warn); font-weight: 700; }
+    .bars { display: grid; gap: 6px; margin-top: 10px; }
+    .bar-row { display: grid; grid-template-columns: 92px minmax(0, 1fr) 60px; gap: 10px; align-items: center; font-size: 13px; }
+    .bar-row > div { height: 14px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
+    .bar-row i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--brand), var(--brand-2)); }
+    .bar-row b { text-align: right; }
+    #setTabs { scrollbar-width: none; }
+    #setTabs button { white-space: nowrap; flex: none; }
+
     /* ============ MOBILE ============ */
     @media (max-width: 1080px) {
       .scan-grid { grid-template-columns: minmax(0, 1fr); }
@@ -389,7 +534,7 @@
       .login-art { display: none; }
       .login-box .brand { display: flex; }
       .login-box .brand small { color: var(--ink-3); }
-      .app { grid-template-columns: 1fr; }
+      .app, .app.rail { grid-template-columns: 1fr; }
       .side { display: none; }
       .top { position: sticky; top: 0; z-index: 50; padding: 12px 16px; padding-top: calc(12px + env(safe-area-inset-top)); background: color-mix(in srgb, var(--bg) 85%, transparent); backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
       .top .logo { display: grid; width: 36px; height: 36px; font-size: 16px; border-radius: 10px; }
@@ -439,11 +584,20 @@
       .fields { grid-template-columns: 1fr; }
       .fields .f, .fields .f.w3 { grid-column: auto; }
       .irow.head { display: none; }
-      .irow { grid-template-columns: 1fr 1fr; gap: 10px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; padding: 12px; margin-bottom: 10px; }
+      .irow:not(.head) { grid-template-columns: 1fr 1fr; gap: 10px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; padding: 12px; margin-bottom: 10px; }
       .irow .f > span { display: block; }
-      .irow .f:first-child { grid-column: 1 / -1; }
+      .irow:not(.head) { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+      .irow .f:first-child, .irow .f.price { grid-column: 1 / -1; }
       .irow .f.q { grid-column: 1; }
-      .irow > .btn { justify-self: end; }
+      .irow > .btn { grid-column: 2; order: 9; justify-self: end; align-self: end; }
+      .irow .amt { grid-column: 1; order: 9; align-self: center; text-align: left; }
+      .irow .amt { grid-column: 1 / -1; order: 10; }
+      .irow-note { order: 11; }
+      .f2 { grid-template-columns: minmax(0, 1fr); }
+      .ctr { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+      .ctr .nm, .ctr .fmt { grid-column: 1 / -1; }
+      .ctr > .btn { grid-column: 1 / -1; }
+      .stats.s3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .form-foot .btn { flex: 1; }
       .inline-form { grid-template-columns: 1fr; }
       .seg { display: flex; }
@@ -520,7 +674,44 @@
       button.opt { min-height: 56px; }
       .opt-t small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     }
+    /* ============ v0.5.0 — PERHALUSAN TAMPILAN ============ */
+    html { scroll-behavior: smooth; scrollbar-gutter: stable; }
+    .card { transition: box-shadow .25s var(--ease), border-color .25s; }
+    .card:has(.input:focus) { border-color: color-mix(in srgb, var(--brand) 35%, var(--line)); }
+    .card > h3:first-child, .card > .sub-h:first-child { margin-bottom: 4px; }
+    .btn { transition: transform .15s var(--ease), background .2s, border-color .2s, box-shadow .2s, color .2s; }
+    .btn.primary:hover { box-shadow: 0 10px 22px -10px var(--brand); transform: translateY(-1px); }
+    .btn.primary:active { transform: scale(.97); }
+    .chip:hover:not(.on) { border-color: var(--ink-3); color: var(--ink); }
+    .seg button:hover:not(.on) { color: var(--ink); background: var(--surface-2); }
+    .stat { transition: transform .2s var(--ease), box-shadow .2s; }
+    .stat:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+    .li, .tr:not(.th), .rec { transition: background .15s, box-shadow .2s, transform .2s var(--ease); }
+    .rec:hover { box-shadow: var(--shadow); }
+    .rtable tbody tr { transition: background .15s; }
+    .rtable tbody tr:hover { background: var(--surface-2); }
+    .toolbar, .page-bar { row-gap: 10px; }
+    /* tab pengaturan & seg bisa digeser di layar sempit tanpa memotong */
+    .seg { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+    .seg::-webkit-scrollbar { display: none; }
+    /* menu lengkap (HP) */
+    .menu-grp { display: flex; align-items: center; gap: 8px; padding-top: 6px; }
+    .menu-grp i { color: var(--brand); font-size: 12px; }
+    .menu-grid button { transition: transform .15s var(--ease), border-color .15s, background .15s; }
+    .menu-grid button:active { transform: scale(.95); }
+    /* bar bawah HP: tombol aktif lebih jelas */
+    .tabbar button.on i { color: #62d9bc; }
+    .tabbar button span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    @media (max-width: 900px) {
+      .tabbar { backdrop-filter: blur(10px); background: color-mix(in srgb, var(--side) 92%, transparent); }
+      .modal-card::before { content: ''; display: block; width: 40px; height: 4px; border-radius: 4px; background: var(--line); margin: 10px auto -6px; flex: none; }
+      .scrolled .top { box-shadow: 0 8px 24px -20px rgba(14,20,36,.5); }
+      /* filter status + tombol muat ulang tetap satu baris (filter digeser ke samping) */
+      .toolbar > .search { flex-basis: 100%; }
+      .toolbar > .chips { flex: 1 1 0; }
+    }
     @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
       *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
     }
   </style>
@@ -532,17 +723,17 @@
 <!-- ================= LOGIN ================= -->
 <main id="login" class="login" hidden>
   <section class="login-art">
-    <div class="brand"><span class="logo"><i class="fa-solid fa-qrcode"></i></span><div><b>System Register COA</b><small>Verification Portal</small></div></div>
+    <div class="brand"><span class="logo"><img src="icons/icon-192.png" alt=""></span><div><b>Origara</b><small>Trace · Verify · Invoice</small></div></div>
     <div>
-      <div class="qr-demo"><i class="fa-solid fa-qrcode"></i></div>
-      <h1 style="margin-top:32px">Scan, verifikasi, dan ekspor COA tanpa salah hitung.</h1>
-      <p>Setiap unit dicocokkan dengan spesifikasi PO — deskripsi, warna, dan ukuran — lalu progresnya tersinkron langsung dari log scan.</p>
+      <div class="qr-demo"><img src="icons/icon-192.png" alt="" style="width:96px;height:96px;border-radius:22px"></div>
+      <h1 style="margin-top:32px">Asal setiap produk, terbukti.</h1>
+      <p>Dari pesanan, scan produksi, Surat Jalan, sampai invoice dan faktur pajak — setiap produk ber-QR tercatat, bisa dilacak, dan bisa dibuktikan keasliannya oleh klien Anda.</p>
     </div>
-    <div class="login-foot">Copyright &copy; 2026 dee-afk21 | All Rights Reserved</div>
+    <div class="login-foot">Origara &copy; 2026 dee-afk21 · All Rights Reserved</div>
   </section>
   <section class="login-panel">
     <div class="login-box">
-      <div class="brand"><span class="logo"><i class="fa-solid fa-qrcode"></i></span><div><b>System Register COA</b><small>Verification Portal</small></div></div>
+      <div class="brand"><span class="logo"><img src="icons/icon-192.png" alt=""></span><div><b>Origara</b><small>Trace · Verify · Invoice</small></div></div>
       <h2>Selamat datang</h2>
       <p>Masuk dengan akun yang diberikan Admin.</p>
       <form id="loginForm" autocomplete="on">
@@ -560,7 +751,7 @@
       </form>
       <button class="btn block" type="button" data-install hidden style="margin-top:14px"><i class="fa-solid fa-download"></i> Pasang sebagai aplikasi</button>
       <div class="ver" data-ver></div>
-      <div id="cfgWarn" class="cfg-warn" hidden><b>API_URL belum diisi.</b> Buka index.html, isi <code>CONFIG.API_URL</code> dengan URL Web App Apps Script (…/exec).</div>
+      <div id="cfgWarn" class="cfg-warn" hidden><b>Server belum diatur.</b> Buka <code>js/config.js</code>, isi <code>SUPABASE_URL</code> dan <code>SUPABASE_KEY</code>.</div>
     </div>
   </section>
 </main>
@@ -568,9 +759,12 @@
 <!-- ================= APP ================= -->
 <div id="app" class="app" hidden>
   <aside class="side">
-    <div class="brand"><span class="logo"><i class="fa-solid fa-qrcode"></i></span><div><b>Register COA</b><small>Verification Portal</small></div></div>
+    <div class="side-head">
+      <div class="brand"><span class="logo"><img src="icons/icon-192.png" alt=""></span><div><b>Origara</b><small>Trace · Verify · Invoice</small></div></div>
+      <button type="button" class="btn icon ghost rail-btn" data-rail title="Perkecil / perbesar panel menu" aria-label="Perkecil / perbesar panel menu"><i class="fa-solid fa-angles-left"></i></button>
+    </div>
     <nav id="nav" class="nav" aria-label="Menu utama"></nav>
-    <button class="btn install-side" type="button" data-install hidden><i class="fa-solid fa-download"></i> Pasang aplikasi</button>
+    <button class="btn install-side" type="button" data-install hidden title="Pasang aplikasi"><i class="fa-solid fa-download"></i> <span>Pasang aplikasi</span></button>
     <div class="side-foot">
       <span class="avatar" data-initials></span>
       <div class="who"><b data-username></b><small data-role></small></div>
@@ -581,8 +775,8 @@
 
   <div class="main">
     <header class="top">
-      <span class="logo"><i class="fa-solid fa-qrcode"></i></span>
-      <div class="top-t"><h1 id="pageTitle"></h1><p id="pageSub"></p></div>
+      <span class="logo"><img src="icons/icon-192.png" alt=""></span>
+      <div class="top-t"><small class="eyebrow" id="pageGroup" hidden></small><h1 id="pageTitle"></h1><p id="pageSub"></p></div>
       <span class="demo-badge" id="demoBadge" hidden>MODE DEMO</span>
       <button class="btn icon ghost m-only" data-install hidden title="Pasang aplikasi" aria-label="Pasang aplikasi"><i class="fa-solid fa-download"></i></button>
       <button class="btn icon ghost m-only" data-theme-toggle aria-label="Ganti tema"><i class="fa-solid fa-moon"></i></button>
@@ -713,15 +907,15 @@
             <button type="button" class="btn sm" id="btnCancelEdit" hidden><i class="fa-solid fa-xmark"></i> Batal edit</button>
           </div>
           <div class="fields">
-            <label class="f"><span>Nomor PO *</span><input class="input" id="fNoPO" placeholder="0001/MMP-PO/TOMORI/X-26"></label>
-            <label class="f"><span>Pelanggan *</span><input class="input" id="fPelanggan" list="dlPelanggan" placeholder="Ketik atau pilih pelanggan…" autocomplete="off"></label>
+            <label class="f"><span>Nomor PO *</span><input class="input" id="fNoPO" placeholder="mis. PO-2026-001"></label>
+            <div class="f"><span>Pelanggan *</span><div class="with-btn"><input class="input" id="fPelanggan" list="dlPelanggan" placeholder="Ketik atau pilih pelanggan…" autocomplete="off" aria-label="Pelanggan"><button type="button" class="btn icon" id="btnNewCust" title="Tambah pelanggan baru" aria-label="Tambah pelanggan baru" hidden><i class="fa-solid fa-user-plus"></i></button></div></div>
             <div class="f"><span>Tanggal PO *</span><div data-date="fTglPO"></div></div>
-            <label class="f w3"><span>MOP *</span><input class="input" id="fMOP" placeholder="MCTG/26/13048"></label>
+            <label class="f w3"><span>MOP *</span><input class="input" id="fMOP" placeholder="mis. MOP-001"></label>
             <div class="f w3"><span>Tanggal Produksi *</span><div data-date="fTglProd"></div></div>
           </div>
 
-          <div class="items-head"><h3>Rincian item &amp; kuota</h3><span class="total-pill" id="formTotal">0 baris · 0 pcs</span></div>
-          <div class="irow head"><div>Deskripsi barang</div><div>Warna</div><div>Ukuran</div><div>QTY target</div><div></div></div>
+          <div class="items-head"><h3>Rincian item, kuota &amp; harga</h3><span class="total-pill" id="formTotal">0 baris · 0 pcs</span></div>
+          <div class="irow head"><div>Deskripsi barang</div><div>Warna</div><div>Ukuran</div><div>QTY target</div><div>Satuan</div><div>Harga satuan</div><div></div></div>
           <div id="formItems"></div>
           <button type="button" class="btn dashed block" id="btnAddItem"><i class="fa-solid fa-plus"></i> Tambah baris</button>
 
@@ -738,6 +932,7 @@
           <div class="seg" id="masterTabs"></div>
           <div class="search" style="max-width:320px"><i class="fa-solid fa-magnifying-glass"></i><input class="input" id="masterSearch" type="search" placeholder="Cari ID atau nama…"></div>
         </div>
+        <p class="muted" style="font-size:13px"><i class="fa-solid fa-circle-info"></i> Data pelanggan sekarang ada di menu <b>Pelanggan</b>.</p>
         <form class="card inline-form" id="masterAdd">
           <label class="f"><span>ID Code</span><input class="input" id="mId" placeholder="mis. 15" autocomplete="off"></label>
           <label class="f"><span id="mNameLabel">Nama</span><input class="input" id="mName" placeholder="Nama / label" autocomplete="off"></label>
@@ -762,20 +957,20 @@
 
 <dialog id="modal" class="modal"></dialog>
 
+<!-- Wajib ikut di-upload: js/config.js (alamat server), modul halaman, dan sertifikat. -->
+<script src="js/config.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/sertifikat.js"></script>
+<script src="js/dokumen.js"></script>
+<script src="js/invoice.js"></script>
+<script src="js/pesanan.js"></script>
+<script src="js/laporan.js"></script>
+<script src="js/koreksi.js"></script>
 <script>
-/* =====================================================================
-   KONFIGURASI
-   Tempel URL Web App Apps Script (berakhiran /exec) di API_URL.
-   Tidak perlu diisi jika file ini disajikan langsung dari Apps Script.
-   ===================================================================== */
-const CONFIG = {
-  API_URL: 'https://script.google.com/macros/s/AKfycbzs0wLBSWuOcEdqlFuLWrDQUWQMFIuzDln2zpZ4dJ2uHp9n9aIzaHbr_oJbqNXrc38/exec',
-  // Berapa scan boleh menunggu jawaban server sekaligus. 3 = operator bisa scan beruntun
-  // tanpa menunggu; 1 = scan berikutnya baru bisa setelah server menjawab (paling aman).
-  SCAN_QUEUE: 3
-};
+/* KONFIGURASI server ada di js/config.js (dipakai juga oleh verifikasi.html). */
+const CONFIG = window.COA_CONFIG || { SUPABASE_URL: '', SUPABASE_KEY: '', API_URL: '', SCAN_QUEUE: 3 };
 // Naikkan setiap kali file ini diubah; tampil di halaman login dan dialog Keluar.
-const APP_VERSION = '0.1.1';
+const APP_VERSION = '0.5.0';
 const LIB = {
   qr: 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js',
   xlsx: 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'
@@ -786,7 +981,11 @@ const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmt = n => Number(n || 0).toLocaleString('id-ID');
-const DEMO = new URLSearchParams(location.search).has('demo');
+const rupiah = n => 'Rp ' + Number(n || 0).toLocaleString('id-ID', { maximumFractionDigits: 2 });
+// ?demo = data contoh di browser. ?uji = database asli (01-database.sql) dijalankan di browser
+// lewat PGlite; hanya untuk pengujian di komputer (butuh folder uji/ dan supabase/ di sebelah github-pages/).
+const UJI = new URLSearchParams(location.search).has('uji');
+const DEMO = UJI || new URLSearchParams(location.search).has('demo');
 const IN_GAS = !!(window.google && google.script && google.script.run);
 // Sesi disimpan di localStorage supaya login bertahan saat aplikasi ditutup lalu dibuka lagi
 // (server tetap mengakhiri sesi setelah 6 jam tanpa aktivitas). Mode demo memakai sessionStorage
@@ -814,7 +1013,7 @@ const state = {
   queue: [], pumping: false, savedRaw: new Set(),
   checkBusy: false, checkHist: [], camCfg: null,
   poList: null, poFilter: 'all', poQuery: '',
-  formMode: 'new', masterTab: 'pelanggan', masterQuery: '', users: []
+  formMode: 'new', masterTab: 'warna', masterQuery: '', users: [], roles: []
 };
 
 /* ---------- API ---------- */
@@ -833,8 +1032,17 @@ async function api(action, ...args) {
       throw new Error('Mode demo tidak aktif karena demo-mock.js tidak termuat.');
     } else if (IN_GAS) {
       res = await new Promise((ok, no) => google.script.run.withSuccessHandler(ok).withFailureHandler(no).apiDispatch(req));
+    } else if (CONFIG.SUPABASE_URL) {
+      // Supabase: satu fungsi database (coa_api) menerima req yang sama dan menjawab { ok, data }.
+      const r = await fetch(CONFIG.SUPABASE_URL.replace(/\/+$/, '') + '/rest/v1/rpc/coa_api', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: CONFIG.SUPABASE_KEY },
+        body: JSON.stringify({ req })
+      });
+      res = await r.json();
+      if (!r.ok) res = { ok: false, code: 'SERVER', error: 'Supabase menolak permintaan (' + r.status + '): ' + ((res && (res.message || res.error)) || 'periksa SUPABASE_URL dan SUPABASE_KEY.') };
     } else {
-      if (!CONFIG.API_URL) throw new Error('API_URL belum diisi di index.html.');
+      if (!CONFIG.API_URL) throw new Error('SUPABASE_URL belum diisi di index.html.');
       // text/plain = "simple request", jadi browser tidak mengirim preflight CORS ke Apps Script.
       const r = await fetch(CONFIG.API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(req) });
       res = await r.json();
@@ -992,7 +1200,7 @@ function idOf(type, name) {
 function setLookup(lookup) {
   state.lookup = lookup;
   const fill = (id, list) => { $(id).innerHTML = list.map(x => `<option value="${esc(x.name)}"></option>`).join(''); };
-  fill('#dlPelanggan', lookup.pelanggan); fill('#dlWarna', lookup.warna); fill('#dlUkuran', lookup.ukuran);
+  fill('#dlPelanggan', lookup.pelanggan.filter(x => x.aktif !== false)); fill('#dlWarna', lookup.warna); fill('#dlUkuran', lookup.ukuran);
   renderMaster();
 }
 const STATUS_CLASS = { 'Pending': 's-pending', 'In Progress': 's-progress', 'Completed': 's-done', 'Exported': 's-exp' };
@@ -1013,23 +1221,50 @@ function initTheme() {
 /* =====================================================================
    SESI & NAVIGASI
    ===================================================================== */
+// perm = hak akses yang dibutuhkan untuk membuka menu (diatur di menu Role).
+// Halaman dari js/admin.js ditambahkan lewat window.COA_MODULES.
 const PAGES = [
-  { id: 'scan',   label: 'Scanner',   icon: 'fa-qrcode',           title: 'Operator Scanner', sub: 'Scan QR/barcode lalu tetapkan spesifikasi item.' },
-  { id: 'check',  label: 'Cek QR',    icon: 'fa-magnifying-glass', title: 'Cek QR Produk',    sub: 'Cari tahu sebuah produk sudah di-scan atau belum, dan masuk PO / MOP mana.' },
-  { id: 'po',     label: 'Daftar PO', icon: 'fa-list-check',      title: 'Daftar Master PO', sub: 'Progres seluruh PO, edit, hapus, dan export XLSX.', admin: true },
-  { id: 'form',   label: 'PO Baru',   icon: 'fa-file-circle-plus', title: 'Input PO Baru',    sub: 'Daftarkan PO beserta rincian item dan kuota.', admin: true },
-  { id: 'master', label: 'Master',    icon: 'fa-database',         title: 'Master Data',      sub: 'Kelola pelanggan, warna, dan ukuran.', admin: true },
-  { id: 'users',  label: 'User',      icon: 'fa-users-gear',       title: 'Kelola User',      sub: 'Akun dan hak akses pengguna.', admin: true }
+  { id: 'scan',   group: 'Operasional', perm: 'scan',          label: 'Scanner',   icon: 'fa-qrcode',           title: 'Operator Scanner', sub: 'Scan QR/barcode lalu tetapkan spesifikasi item.' },
+  { id: 'check',  group: 'Operasional', perm: 'cekqr',         label: 'Cek QR',    icon: 'fa-magnifying-glass', title: 'Cek QR Produk',    sub: 'Cari tahu sebuah produk sudah di-scan atau belum, dan masuk PO / MOP mana.' },
+  { id: 'po',     group: 'PO',          perm: 'po.lihat',      label: 'Daftar PO', icon: 'fa-list-check',       title: 'Daftar Master PO', sub: 'Progres seluruh PO, edit, hapus, dan export XLSX.' },
+  { id: 'form',   group: 'PO',          perm: 'po.tambah',     label: 'PO Baru',   icon: 'fa-file-circle-plus', title: 'Input PO Baru',    sub: 'Daftarkan PO beserta rincian item, kuota, dan harga.' },
+  { id: 'master', group: 'Data',        perm: 'master.kelola', label: 'Warna & Ukuran', short: 'Master', icon: 'fa-palette', title: 'Warna & Ukuran', sub: 'Kelola daftar warna dan ukuran.' },
+  { id: 'users',  group: 'Sistem',      perm: 'user.kelola',   label: 'User',      icon: 'fa-users-gear',       title: 'Kelola User',      sub: 'Akun pengguna dan role-nya.' }
 ];
-// Admin = akses penuh. Supervisor = admin tanpa akses hapus. Operator = hanya scanner.
-const isAdmin = () => !!state.user && (state.user.role === 'Admin' || state.user.role === 'Supervisor');
-const canDelete = () => !!state.user && state.user.role === 'Admin';
+const PAGE_HOOKS = {};   // id halaman -> fungsi yang dijalankan saat halaman dibuka
+(window.COA_MODULES || []).forEach(m => (m.pages || []).forEach(p => {
+  PAGES.push(p);
+  if (p.onShow) PAGE_HOOKS[p.id] = p.onShow;
+}));
+// v0.5.0: susunan menu diatur di SATU tempat ini (mengikuti alur kerja), modul cukup mendaftarkan halaman.
+// [grup, urutan]. Halaman yang tidak tercantum memakai grup bawaan dari modulnya.
+const MENU_LAYOUT = {
+  scan: ['Produksi', 1], check: ['Produksi', 2], koreksi: ['Produksi', 3],
+  sp: ['Pesanan', 1], form: ['Pesanan', 2], po: ['Pesanan', 3],
+  dn: ['Kirim & Tagih', 1], inv: ['Kirim & Tagih', 2], laporan: ['Kirim & Tagih', 3],
+  pelanggan: ['Master Data', 1], qr: ['Master Data', 2], master: ['Master Data', 3],
+  users: ['Sistem', 1], roles: ['Sistem', 2], settings: ['Sistem', 3], backup: ['Sistem', 4]
+};
+const GROUP_ORDER = ['Portal', 'Produksi', 'Pesanan', 'Kirim & Tagih', 'Master Data', 'Sistem'];
+const GROUP_ICON = { Portal: 'fa-store', Produksi: 'fa-industry', Pesanan: 'fa-clipboard-list', 'Kirim & Tagih': 'fa-truck-fast', 'Master Data': 'fa-database', Sistem: 'fa-gear' };
+PAGES.forEach(p => { const m = MENU_LAYOUT[p.id]; if (m) { p.group = m[0]; p.order = m[1]; } if (!GROUP_ORDER.includes(p.group)) GROUP_ORDER.push(p.group); });
+// Tombol bar bawah HP: dipilih dari menu yang paling sering dipakai, sesuai hak akses.
+const TAB_PRIORITY = ['pesanan', 'scan', 'po', 'dn', 'inv', 'check', 'sp', 'form', 'laporan'];
+PAGES.sort((a, b) => GROUP_ORDER.indexOf(a.group) - GROUP_ORDER.indexOf(b.group) || (a.order || 0) - (b.order || 0));
+/** Hak akses user yang sedang login. Admin selalu punya semuanya. */
+const can = perm => !!state.user && (state.user.admin || (state.user.perms || []).includes(perm));
+const isAdmin = () => !!state.user && !!state.user.admin;
+const canDelete = () => can('user.hapus');
 const ROLE_PILL = { Admin: 'r-admin', Supervisor: 'r-sup' };
-const myPages = () => PAGES.filter(p => !p.admin || isAdmin());
+const rolePill = u => `<span class="pill ${u.admin ? 'r-admin' : (ROLE_PILL[u.role] || '')}">${esc(u.role)}</span>`;
+// Akun pelanggan (portal) hanya melihat halaman bertanda customer; staf tidak pernah melihatnya.
+const isCustomer = () => !!(state.user && state.user.idPelanggan);
+const myPages = () => PAGES.filter(p => isCustomer() ? p.customer : (!p.customer && can(p.perm)));
+const TAB_MAX = 5;   // jumlah tombol di bar bawah HP; sisanya lewat tombol "Menu"
 
 function showLogin() {
   $('#app').hidden = true; $('#login').hidden = false;
-  $('#cfgWarn').hidden = !!(CONFIG.API_URL || IN_GAS || DEMO);
+  $('#cfgWarn').hidden = !!(CONFIG.SUPABASE_URL || CONFIG.API_URL || IN_GAS || DEMO);
   setTimeout(() => $('#loginUser').focus(), 50);
 }
 function endSession() {
@@ -1045,11 +1280,33 @@ function endSession() {
 }
 async function logout() {
   const u = state.user;
-  const yes = await modal({ title: 'Keluar dari aplikasi?', text: `${u.name} · ${u.role} · versi ${APP_VERSION}`, icon: 'fa-right-from-bracket', confirmText: 'Keluar' });
+  let wantPw = false;
+  const yes = await modal({ title: 'Keluar dari aplikasi?', text: `${u.name} · ${u.idPelanggan ? u.pelanggan : u.role} · versi ${APP_VERSION}`, icon: 'fa-right-from-bracket', confirmText: 'Keluar',
+    html: DEMO && !UJI ? '' : '<button type="button" class="btn block" data-pw><i class="fa-solid fa-key"></i> Ganti password saya</button>',
+    onOpen: (d, finish) => { const b = $('[data-pw]', d); if (b) b.onclick = () => { wantPw = true; finish(null); }; } });
+  if (wantPw) return changePassword();
   if (!yes) return;
   const token = state.token;
   api('logout', token).catch(() => {});
   endSession();
+}
+
+async function changePassword() {
+  const res = await modal({
+    title: 'Ganti password', icon: 'fa-key', confirmText: 'Simpan password',
+    html: `<label class="f"><span>Password lama</span><input class="input" id="pwOld" type="password" autocomplete="current-password"></label>
+           <label class="f"><span>Password baru (min. 6 karakter)</span><input class="input" id="pwNew" type="password" autocomplete="new-password"></label>
+           <label class="f"><span>Ulangi password baru</span><input class="input" id="pwNew2" type="password" autocomplete="new-password"></label>`,
+    collect: d => {
+      const o = $('#pwOld', d).value, n = $('#pwNew', d).value;
+      if (!o || !n) throw new Error('Isi password lama dan password baru.');
+      if (n.length < 6) throw new Error('Password baru minimal 6 karakter.');
+      if (n !== $('#pwNew2', d).value) throw new Error('Ulangan password baru tidak sama.');
+      return [o, n];
+    },
+    action: v => api('changePassword', v[0], v[1])
+  });
+  if (res) toast(res.message, 'ok');
 }
 
 function showApp() {
@@ -1058,35 +1315,109 @@ function showApp() {
   const initials = u.name.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
   $$('[data-initials]').forEach(el => el.textContent = initials);
   $$('[data-username]').forEach(el => el.textContent = u.name);
-  $$('[data-role]').forEach(el => el.textContent = u.role);
+  $$('[data-role]').forEach(el => el.textContent = u.idPelanggan ? (u.pelanggan || u.role) : u.role);
   $('#demoBadge').hidden = !DEMO; $('#btnDemoQR').hidden = !DEMO; $('#btnDemoQR2').hidden = !DEMO;
 
+  renderNav();
+  $('#btnNewCust').hidden = !can('pelanggan.kelola');
   const pages = myPages();
-  const btn = p => `<button type="button" data-go="${p.id}"><i class="fa-solid ${p.icon}"></i><span>${p.label}</span></button>`;
-  $('#nav').innerHTML = `<div class="nav-label">Operasional</div>${pages.filter(p => !p.admin).map(btn).join('')}` +
-    (isAdmin() ? `<div class="nav-label">Admin</div>${pages.filter(p => p.admin).map(btn).join('')}` : '');
-  $('#tabbar').innerHTML = pages.map(btn).join('');
-  $('#app').classList.toggle('solo', pages.length < 2);
   const saved = store.get('coa_page');
-  go(pages.some(p => p.id === saved) ? saved : 'scan');
+  go(pages.some(p => p.id === saved) ? saved : (pages[0] || PAGES[0]).id);
+}
+/* Grup menu yang dilipat & mode panel ramping disimpan per perangkat (hanya kenyamanan tampilan). */
+const navPref = { get() { try { return JSON.parse(localStorage.getItem('coa_nav') || '{}'); } catch (e) { return {}; } },
+                  set(v) { try { localStorage.setItem('coa_nav', JSON.stringify(v)); } catch (e) {} } };
+function renderNav() {
+  const pages = myPages();
+  const pref = navPref.get(), folded = pref.folded || [];
+  const btn = (p, short) => `<button type="button" data-go="${p.id}" title="${esc(p.label)}"><i class="fa-solid ${p.icon}"></i><span>${esc(short && p.short || p.label)}</span></button>`;
+  const groups = GROUP_ORDER.map(g => ({ g, list: pages.filter(p => p.group === g) })).filter(x => x.list.length);
+  const single = groups.length < 2;   // satu grup saja (mis. portal pelanggan): judul grup tidak perlu
+  $('#nav').innerHTML = groups.map(({ g, list }) => `
+    <div class="nav-grp${folded.includes(g) && !single ? ' fold' : ''}" data-grp="${esc(g)}">
+      ${single ? '' : `<button type="button" class="nav-label" data-fold aria-expanded="${!folded.includes(g)}" title="${esc(g)}"><i class="fa-solid ${GROUP_ICON[g] || 'fa-folder'}"></i><span>${esc(g)}</span><i class="fa-solid fa-chevron-down nav-caret"></i></button>`}
+      <div class="nav-items"><div>${list.map(p => btn(p)).join('')}</div></div>
+    </div>`).join('');
+  $$('#nav [data-fold]').forEach(b => b.onclick = () => {
+    const grp = b.parentElement, g = grp.dataset.grp, p = navPref.get(), f = new Set(p.folded || []);
+    if ($('#app').classList.contains('rail')) return;   // panel ramping: grup selalu terbuka
+    grp.classList.toggle('fold'); f[grp.classList.contains('fold') ? 'add' : 'delete'](g);
+    b.setAttribute('aria-expanded', !grp.classList.contains('fold'));
+    p.folded = [...f]; navPref.set(p);
+  });
+  // HP: maksimal TAB_MAX tombol; bila lebih, 4 menu utama (TAB_PRIORITY) + tombol Menu berisi semua halaman.
+  let tabs = pages;
+  if (pages.length > TAB_MAX) {
+    const pick = TAB_PRIORITY.map(id => pages.find(p => p.id === id)).filter(Boolean);
+    pages.forEach(p => { if (!pick.includes(p)) pick.push(p); });
+    tabs = pick.slice(0, TAB_MAX - 1);
+  }
+  $('#tabbar').innerHTML = tabs.map(p => btn(p, true)).join('') +
+    (pages.length > TAB_MAX ? '<button type="button" data-menu><i class="fa-solid fa-grip"></i><span>Menu</span></button>' : '');
+  $('#app').classList.toggle('solo', pages.length < 2);
+  $('#app').classList.toggle('rail', !!pref.rail);
+}
+function toggleRail() {
+  const p = navPref.get(); p.rail = !p.rail; navPref.set(p);
+  $('#app').classList.toggle('rail', p.rail);
+}
+function openMenu() {
+  const pages = myPages();
+  modal({
+    title: 'Menu', icon: 'fa-grip', noConfirm: true, cancelText: 'Tutup',
+    html: `<div class="menu-grid">${GROUP_ORDER.map(g => {
+      const list = pages.filter(p => p.group === g);
+      return list.length ? `<div class="menu-grp"><i class="fa-solid ${GROUP_ICON[g] || 'fa-folder'}"></i> ${esc(g)}</div>` + list.map(p =>
+        `<button type="button" data-menu-go="${p.id}" class="${p.id === state.page ? 'on' : ''}"><i class="fa-solid ${p.icon}"></i>${esc(p.label)}</button>`).join('') : '';
+    }).join('')}</div>`,
+    onOpen: (d, finish) => $$('[data-menu-go]', d).forEach(b => b.onclick = () => {
+      finish(null);
+      if (b.dataset.menuGo === 'form' && state.formMode === 'edit') resetForm();
+      go(b.dataset.menuGo);
+    })
+  });
 }
 
 function go(id) {
-  const page = myPages().find(p => p.id === id) || PAGES[0];
+  let page = myPages().find(p => p.id === id);
+  // Edit PO memakai halaman form; cukup punya izin "Mengubah PO".
+  if (!page && id === 'form' && state.formMode === 'edit' && can('po.ubah')) page = PAGES.find(p => p.id === 'form');
+  page = page || myPages()[0];
+  if (!page) { // role tanpa hak akses apa pun
+    $$('.page').forEach(s => s.hidden = true);
+    setTitle('Belum ada akses', 'Minta Admin memberi hak akses pada role Anda di menu Role.');
+    return;
+  }
   if (state.page !== page.id) stopCam();
+  const changed = state.page !== page.id;
   state.page = page.id; store.set('coa_page', page.id);
   $$('.page').forEach(s => s.hidden = s.id !== 'page-' + page.id);
   const navId = page.id === 'form' && state.formMode === 'edit' ? 'po' : page.id; // saat edit, menu aktif tetap "Daftar PO"
   $$('[data-go]').forEach(b => b.classList.toggle('on', b.dataset.go === navId));
-  setTitle(page.title, page.sub);
+  $$('#nav .nav-grp').forEach(g => g.classList.toggle('cur', !!$(`[data-go="${navId}"]`, g)));
+  const activeNav = $(`#nav [data-go="${navId}"]`);
+  if (activeNav) {   // menu aktif selalu terlihat di panel kiri; grupnya dibuka bila sedang dilipat
+    const grp = activeNav.closest('.nav-grp');
+    if (grp && grp.classList.contains('fold')) grp.classList.remove('fold');
+    (grp && grp.firstElementChild.classList.contains('nav-label') ? grp.firstElementChild : activeNav).scrollIntoView({ block: 'nearest' });
+    activeNav.scrollIntoView({ block: 'nearest' });
+  }
+  const menuBtn = $('#tabbar [data-menu]');
+  if (menuBtn) menuBtn.classList.toggle('on', !$(`#tabbar [data-go="${navId}"]`));
+  setTitle(page.title, page.sub, page.group);
+  if (changed) { const sec = $('#page-' + page.id); if (sec) { sec.classList.remove('enter'); void sec.offsetWidth; sec.classList.add('enter'); } }
   window.scrollTo(0, 0);
   if (page.id === 'po') loadPOList();
   if (page.id === 'users') loadUsers();
   if (page.id === 'form') { if (state.formMode === 'edit') setTitle('Edit Master PO', 'Ubah header, tambah item, atau sesuaikan QTY target.'); else if (!$('#formItems').children.length) resetForm(); }
   if (page.id === 'scan') focusScan();
   if (page.id === 'check') focusCheck();
+  if (PAGE_HOOKS[page.id]) PAGE_HOOKS[page.id]();
 }
-function setTitle(title, sub) { $('#pageTitle').textContent = title; $('#pageSub').textContent = sub || ''; }
+function setTitle(title, sub, group) {
+  $('#pageTitle').textContent = title; $('#pageSub').textContent = sub || '';
+  if (group !== undefined) { const ey = $('#pageGroup'); ey.textContent = group && group !== 'Portal' ? group : ''; ey.hidden = !ey.textContent; }
+}
 
 function applyBoot(boot) {
   setLookup(boot.lookup);
@@ -1094,6 +1425,8 @@ function applyBoot(boot) {
   renderPOSelect();
   const savedPO = store.get('coa_po');
   if (savedPO && state.activePO.some(p => p.noPO === savedPO)) { $('#poSelect').value = savedPO; selectPO(savedPO); }
+  // Instalasi baru (nama perusahaan masih kosong): tampilkan wizard pengaturan awal.
+  if (boot.perluSetup && window.COA_SETUP) setTimeout(() => window.COA_SETUP(), 500);
 }
 
 async function onLogin(e) {
@@ -1511,7 +1844,9 @@ function renderCheck(r) {
         ${idFacts}
         ${fact('Tgl produksi', isoToDMY(s.tglProduksi))}
         <div class="fact"><small>Status PO</small><b>${s.poStatus ? statusPill(s.poStatus) : '-'}</b></div>
+        ${fact('Surat Jalan', s.noDN ? `${s.noDN} · ${isoToDMY(s.tglKirim)}` : 'Belum dikirim', true)}
       </div>
+      <div class="row" style="margin-top:12px"><a class="btn block" href="verifikasi.html?code=${encodeURIComponent(r.itemCode)}${UJI ? '&uji' : ''}" target="_blank" rel="noopener"><i class="fa-solid fa-award"></i> Halaman verifikasi klien &amp; sertifikat</a></div>
     </div>`;
   }
   $('#checkResult').innerHTML = html;
@@ -1558,12 +1893,12 @@ function renderPOList() {
         <div class="c-d1 num" data-l="Tgl PO">${esc(isoToDMY(p.tglPO))}</div>
         <div class="c-mop" data-l="MOP">${esc(p.mop)}</div>
         <div class="c-d2 num" data-l="Produksi">${esc(isoToDMY(p.tglProduksi))}</div>
-        <div class="c-prog"><div class="bar ${p.percent >= 100 ? 'full' : ''}"><i style="width:${p.percent}%"></i></div><small>${fmt(p.totalScanned)} / ${fmt(p.totalTarget)} pcs · ${p.percent}%</small></div>
+        <div class="c-prog"><div class="bar ${p.percent >= 100 ? 'full' : ''}"><i style="width:${p.percent}%"></i></div><small>${fmt(p.totalScanned)} / ${fmt(p.totalTarget)} pcs · ${p.percent}%${Number(p.nilai) > 0 ? ' · ' + rupiah(p.nilai) : ''}</small></div>
         <div class="c-status">${statusPill(p.status)}</div>
         <div class="c-act">
-          <button class="btn sm icon" data-act="edit" title="Edit PO" aria-label="Edit PO"><i class="fa-solid fa-pen"></i></button>
-          <button class="btn sm icon t-ok" data-act="export" title="Export XLSX" aria-label="Export XLSX"><i class="fa-solid fa-file-excel"></i></button>
-          ${canDelete() ? '<button class="btn sm icon t-bad" data-act="del" title="Hapus PO" aria-label="Hapus PO"><i class="fa-solid fa-trash"></i></button>' : ''}
+          ${can('po.ubah') ? '<button class="btn sm icon" data-act="edit" title="Edit PO" aria-label="Edit PO"><i class="fa-solid fa-pen"></i></button>' : ''}
+          ${can('po.export') ? '<button class="btn sm icon t-ok" data-act="export" title="Export XLSX" aria-label="Export XLSX"><i class="fa-solid fa-file-excel"></i></button>' : ''}
+          ${can('po.hapus') ? '<button class="btn sm icon t-bad" data-act="del" title="Hapus PO" aria-label="Hapus PO"><i class="fa-solid fa-trash"></i></button>' : ''}
         </div>
       </div>`;
     }).join('');
@@ -1586,7 +1921,7 @@ async function exportPO(noPO) {
   const warn = po.status === 'Exported' ? '' :
     `<div class="note"><b>Status akan terkunci menjadi Exported.</b> ${po.percent < 100 ? `PO ini baru ${po.percent}% ter-scan — setelah di-export tidak bisa di-scan lagi.` : 'PO tidak akan muncul lagi di daftar scan operator.'}</div>`;
   const res = await modal({
-    title: 'Export XLSX import COA', text: `PO ${noPO}`, icon: 'fa-file-excel', tone: 'ok', confirmText: 'Download XLSX',
+    title: 'Export Excel verifikasi', text: `PO ${noPO}`, icon: 'fa-file-excel', tone: 'ok', confirmText: 'Download XLSX',
     html: `<div class="f"><span>Tanggal kirim *</span>${dateField('xTglKirim', todayDMY())}</div>${warn}`,
     collect: d => {
       const v = $('#xTglKirim', d).value;
@@ -1618,14 +1953,41 @@ function itemRow(it = {}) {
     <label class="f"><span>Warna</span><input class="input i-warna" list="dlWarna" value="${esc(it.warna)}" placeholder="Ketik / pilih" autocomplete="off" ${sc ? 'readonly' : ''}></label>
     <label class="f"><span>Ukuran</span><input class="input i-size" list="dlUkuran" value="${esc(it.ukuran)}" placeholder="Ketik / pilih" autocomplete="off" ${sc ? 'readonly' : ''}></label>
     <label class="f q"><span>QTY target</span><input class="input i-qty num" type="number" inputmode="numeric" min="${Math.max(1, sc)}" value="${esc(it.qtyTarget)}" placeholder="0"></label>
+    <label class="f unit"><span>Satuan</span><select class="input i-unit" title="Satuan ukur (kode Coretax)">${unitOptions(it.satuan)}</select></label>
+    <label class="f price"><span>Harga satuan</span><div class="rp"><input class="input i-price num" inputmode="decimal" value="${Number(it.harga) ? esc(fmtPrice(it.harga)) : ''}" placeholder="0" autocomplete="off"></div></label>
     <button type="button" class="btn icon t-bad" data-del-row aria-label="Hapus baris" ${sc ? 'disabled title="Sudah ada scan — tidak bisa dihapus"' : ''}><i class="fa-solid fa-trash"></i></button>
-    ${sc ? `<small class="irow-note"><i class="fa-solid fa-lock"></i> ${fmt(sc)} pcs sudah ter-scan — spesifikasi dikunci, QTY minimal ${fmt(sc)}.</small>` : ''}
+    <div class="amt num"></div>
+    ${sc ? `<small class="irow-note"><i class="fa-solid fa-lock"></i> ${fmt(sc)} pcs sudah ter-scan — spesifikasi dikunci, QTY minimal ${fmt(sc)}. Harga tetap bisa diubah.</small>` : ''}
   </div>`;
 }
+/** "665.000" / "665000" / "1.250,50" -> 665000 / 1250.5. Kosong -> 0. Tidak valid -> NaN. */
+function parsePrice(v) {
+  const s = String(v ?? '').trim().replace(/\s/g, '');
+  if (!s) return 0;
+  if (!/^\d{1,3}(\.\d{3})*(,\d{1,2})?$|^\d+(,\d{1,2})?$|^\d+(\.\d{1,2})?$/.test(s)) return NaN;
+  // titik diikuti tepat 3 digit = pemisah ribuan; selain itu titik = desimal
+  const thousands = /\.\d{3}(?!\d)/.test(s) || s.includes(',');
+  return Number(thousands ? s.replace(/\./g, '').replace(',', '.') : s);
+}
+const fmtPrice = n => Number(n || 0).toLocaleString('id-ID', { maximumFractionDigits: 2 });
+/** Satuan ukur resmi Coretax (sama dengan sheet REF-General template e-Faktur). Disimpan sebagai kodenya. */
+const UNITS = [['UM.0021', 'Piece'], ['UM.0019', 'Set'], ['UM.0017', 'Lusin'], ['UM.0018', 'Unit'], ['UM.0022', 'Boks'], ['UM.0037', 'Karton'],
+  ['UM.0020', 'Lembar'], ['UM.0039', 'Roll'], ['UM.0013', 'Meter'], ['UM.0016', 'Yard'], ['UM.0003', 'Kilogram'], ['UM.0004', 'Gram'],
+  ['UM.0001', 'Metrik Ton'], ['UM.0002', 'Wet Ton'], ['UM.0005', 'Karat'], ['UM.0006', 'Kiloliter'], ['UM.0007', 'Liter'], ['UM.0008', 'Barrel'],
+  ['UM.0009', 'MMBTU'], ['UM.0010', 'Ampere'], ['UM.0011', 'Sentimeter Kubik'], ['UM.0012', 'Meter Persegi'], ['UM.0014', 'Inci'],
+  ['UM.0015', 'Sentimeter'], ['UM.0023', 'Tahun'], ['UM.0024', 'Bulan'], ['UM.0025', 'Minggu'], ['UM.0026', 'Hari'], ['UM.0027', 'Jam'],
+  ['UM.0028', 'Menit'], ['UM.0029', 'Persen'], ['UM.0030', 'Kegiatan'], ['UM.0031', 'Laporan'], ['UM.0032', 'Bahan'], ['UM.0033', 'Lainnya'],
+  ['UM.0034', 'Meter Kubik'], ['UM.0035', 'Sentimeter Persegi'], ['UM.0036', 'Drum'], ['UM.0038', 'Kwh']];
+const unitName = code => (UNITS.find(u => u[0] === code) || [code, code])[1];
+const unitOptions = cur => {
+  cur = /^UM\.\d{4}$/.test(cur || '') ? cur : 'UM.0021';
+  return UNITS.map(([k, l]) => `<option value="${k}" title="Kode Coretax ${k}" ${k === cur ? 'selected' : ''}>${l}</option>`).join('');
+};
 function addItemRow(it, focus) {
-  if (!it) { // baris baru mewarisi deskripsi & warna baris terakhir: biasanya hanya ukuran yang berbeda
+  if (!it) { // baris baru mewarisi deskripsi, warna, satuan & harga baris terakhir: biasanya hanya ukuran yang berbeda
     const last = $('#formItems .irow:last-child');
-    it = last ? { deskripsi: $('.i-desc', last).value, warna: $('.i-warna', last).value } : {};
+    it = last ? { deskripsi: $('.i-desc', last).value, warna: $('.i-warna', last).value, satuan: $('.i-unit', last).value,
+                  harga: parsePrice($('.i-price', last).value) || 0 } : {};
   }
   $('#formItems').insertAdjacentHTML('beforeend', itemRow(it));
   updateFormTotal();
@@ -1633,8 +1995,13 @@ function addItemRow(it, focus) {
 }
 function updateFormTotal() {
   const rows = $$('#formItems .irow');
-  const total = rows.reduce((a, r) => a + (parseInt($('.i-qty', r).value, 10) || 0), 0);
-  $('#formTotal').textContent = `${rows.length} baris · ${fmt(total)} pcs`;
+  let total = 0, nilai = 0;
+  rows.forEach(r => {
+    const q = parseInt($('.i-qty', r).value, 10) || 0, h = parsePrice($('.i-price', r).value) || 0;
+    total += q; nilai += q * h;
+    $('.amt', r).innerHTML = q && h ? `${fmt(q)} ${esc(unitName($('.i-unit', r).value))} × ${fmtPrice(h)}<b>${rupiah(q * h)}</b>` : '';
+  });
+  $('#formTotal').textContent = `${rows.length} baris · ${fmt(total)} pcs` + (nilai ? ` · ${rupiah(nilai)}` : '');
 }
 function resetForm() {
   state.formMode = 'new';
@@ -1642,7 +2009,7 @@ function resetForm() {
   $$('#poForm .invalid').forEach(el => el.classList.remove('invalid'));
   $('#fNoPO').readOnly = false;
   $('#formTitle').textContent = 'PO Baru';
-  $('#formSub').textContent = 'Isi data header lalu rincian item dan kuotanya.';
+  $('#formSub').textContent = 'Isi data header lalu rincian item, kuota, dan harganya.';
   $('#formSubmit span').textContent = 'Simpan Master PO';
   $('#btnCancelEdit').hidden = true;
   $('#formItems').innerHTML = '';
@@ -1665,7 +2032,8 @@ async function startEdit(noPO, btn) {
   $('#formSubmit span').textContent = 'Simpan Perubahan';
   $('#btnCancelEdit').hidden = false;
   $('#formItems').innerHTML = '';
-  res.items.forEach(it => addItemRow({ deskripsi: it.deskripsi, warna: nameOf('warna', it.idWarna), ukuran: nameOf('ukuran', it.idUkuran), qtyTarget: it.qtyTarget, qtyScanned: it.qtyScanned }));
+  res.items.forEach(it => addItemRow({ deskripsi: it.deskripsi, warna: nameOf('warna', it.idWarna), ukuran: nameOf('ukuran', it.idUkuran), qtyTarget: it.qtyTarget, qtyScanned: it.qtyScanned,
+                                       harga: it.harga, satuan: it.satuan }));
   if (!res.items.length) addItemRow({});
   go('form');
 }
@@ -1681,11 +2049,12 @@ function collectForm() {
   const seen = new Set();
   let dup = false;
   const items = $$('#formItems .irow').map(row => {
-    const desc = $('.i-desc', row), warna = $('.i-warna', row), size = $('.i-size', row), qty = $('.i-qty', row);
-    const min = Math.max(1, +row.dataset.scanned || 0), q = parseInt(qty.value, 10);
+    const desc = $('.i-desc', row), warna = $('.i-warna', row), size = $('.i-size', row), qty = $('.i-qty', row), price = $('.i-price', row);
+    const min = Math.max(1, +row.dataset.scanned || 0), q = parseInt(qty.value, 10), h = parsePrice(price.value);
     need(desc, !!desc.value.trim()); need(warna, !!warna.value.trim()); need(size, !!size.value.trim());
-    need(qty, q >= min);
-    const item = { deskripsi: desc.value.trim(), idWarna: idOf('warna', warna.value), idUkuran: idOf('ukuran', size.value), qtyTarget: q };
+    need(qty, q >= min); need(price, Number.isFinite(h) && h >= 0);
+    const item = { deskripsi: desc.value.trim(), idWarna: idOf('warna', warna.value), idUkuran: idOf('ukuran', size.value), qtyTarget: q,
+                   satuan: $('.i-unit', row).value, harga: Number.isFinite(h) ? h : 0 };
     const key = [item.deskripsi, item.idWarna, item.idUkuran].join('|').toLowerCase();
     if (seen.has(key) && item.deskripsi) { dup = true; need(size, false); }
     seen.add(key);
@@ -1706,20 +2075,23 @@ async function submitForm(e) {
   if (!res) return;
   toast(res.message, 'ok');
   resetForm();
-  refreshActivePO();
+  if (res.activePO) { state.activePO = res.activePO; renderPOSelect(); } else refreshActivePO();
   if (state.po && state.po.noPO === payload.noPO) selectPO(payload.noPO);
-  go('po');
+  if (editing) return go('po');
+  // PO baru: tetap di form kosong supaya bisa langsung input PO berikutnya.
+  window.scrollTo(0, 0);
+  $('#fNoPO').focus();
 }
 
 /* =====================================================================
    MASTER DATA
    ===================================================================== */
-const MASTER = { pelanggan: 'Pelanggan', warna: 'Warna', ukuran: 'Ukuran' };
+const MASTER = { warna: 'Warna', ukuran: 'Ukuran' };
 function renderMaster() {
   const type = state.masterTab;
   $('#masterTabs').innerHTML = Object.keys(MASTER).map(k => `<button type="button" class="${k === type ? 'on' : ''}" data-mtab="${k}">${MASTER[k]}<span>${state.lookup[k].length}</span></button>`).join('');
   $('#mNameLabel').textContent = 'Nama ' + MASTER[type];
-  $('#mName').placeholder = type === 'warna' ? 'mis. ROYAL BLUE' : type === 'ukuran' ? 'mis. XL' : 'mis. PT. MESITECHMITRA';
+  $('#mName').placeholder = type === 'warna' ? 'mis. ROYAL BLUE' : type === 'ukuran' ? 'mis. XL' : 'mis. PT. CONTOH JAYA';
   const q = state.masterQuery.toLowerCase();
   const rows = state.lookup[type].filter(x => !q || (x.id + ' ' + x.name).toLowerCase().includes(q));
   $('#masterList').innerHTML = rows.length ? rows.map(x => `
@@ -1728,7 +2100,7 @@ function renderMaster() {
       <div class="t"><b>${esc(x.name)}</b></div>
       <div class="acts">
         <button class="btn sm icon" data-mact="edit" aria-label="Edit"><i class="fa-solid fa-pen"></i></button>
-        ${canDelete() ? '<button class="btn sm icon t-bad" data-mact="del" aria-label="Hapus"><i class="fa-solid fa-trash"></i></button>' : ''}
+        ${can('master.hapus') ? '<button class="btn sm icon t-bad" data-mact="del" aria-label="Hapus"><i class="fa-solid fa-trash"></i></button>' : ''}
       </div>
     </div>`).join('') : `<div class="empty"><i class="fa-solid fa-database"></i><b>${q ? 'Tidak ditemukan' : 'Belum ada data ' + MASTER[type].toLowerCase()}</b>${q ? 'Coba kata kunci lain.' : 'Tambahkan lewat form di atas.'}</div>`;
 }
@@ -1772,40 +2144,63 @@ async function delMaster(row) {
    ===================================================================== */
 async function loadUsers() {
   if (!state.users.length) $('#userList').innerHTML = '<div class="skel"></div><div class="skel"></div>';
-  const users = await run(null, () => api('listUsers'));
+  const [users, rr] = await Promise.all([run(null, () => api('listUsers')), run(null, () => api('listRoles'))]);
+  if (rr) state.roles = rr.roles;
   if (users) renderUsers(users);
+}
+/** Role yang boleh diberikan / diubah user ini: Admin semua; selain itu hanya role yang hak aksesnya tidak melebihi miliknya. */
+function roleAllowed(name) {
+  if (isAdmin()) return true;
+  const r = state.roles.find(x => x.nama === name);
+  return !!r && !r.sistem && r.perms.every(p => can(p));
 }
 function renderUsers(users) {
   state.users = users;
-  const n = role => users.filter(u => u.role === role).length;
-  $('#usersCount').textContent = `${users.length} akun · ${n('Admin')} admin · ${n('Supervisor')} supervisor`;
+  const counts = {};
+  users.forEach(u => { counts[u.role] = (counts[u.role] || 0) + 1; });
+  $('#usersCount').textContent = `${users.length} akun · ` + Object.keys(counts).map(r => `${counts[r]} ${r.toLowerCase()}`).join(' · ');
   $('#userList').innerHTML = users.map(u => {
     const me = u.username === state.user.username;
-    const locked = !canDelete() && u.role === 'Admin'; // Supervisor tidak boleh mengubah akun Admin
+    const locked = !me && !roleAllowed(u.role);
     return `<div class="li" data-user="${esc(u.username)}">
       <span class="avatar">${esc((u.name || u.username).split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase())}</span>
-      <div class="t"><b>${esc(u.name)} ${me ? '<small>(Anda)</small>' : ''}</b><small class="mono">${esc(u.username)}</small></div>
-      <span class="pill ${ROLE_PILL[u.role] || ''}">${esc(u.role)}</span>
+      <div class="t"><b>${esc(u.name)} ${me ? '<small>(Anda)</small>' : ''}</b><small class="mono">${esc(u.username)}</small>${u.idPelanggan ? `<small> · portal ${esc(nameOf('pelanggan', u.idPelanggan))}</small>` : ''}</div>
+      ${rolePill(u)}
       <div class="acts">
-        <button class="btn sm icon" data-uact="edit" aria-label="Edit user" ${locked ? 'disabled title="Hanya Admin penuh yang boleh mengubah akun Admin"' : ''}><i class="fa-solid fa-pen"></i></button>
-        ${canDelete() ? `<button class="btn sm icon t-bad" data-uact="del" aria-label="Hapus user" ${me ? 'disabled title="Tidak bisa menghapus akun sendiri"' : ''}><i class="fa-solid fa-trash"></i></button>` : ''}
+        <button class="btn sm icon" data-uact="edit" aria-label="Edit user" ${locked ? 'disabled title="Role user ini punya hak akses melebihi milik Anda"' : ''}><i class="fa-solid fa-pen"></i></button>
+        ${canDelete() ? `<button class="btn sm icon t-bad" data-uact="del" aria-label="Hapus user" ${me || locked ? 'disabled title="Tidak bisa menghapus akun ini"' : ''}><i class="fa-solid fa-trash"></i></button>` : ''}
       </div>
     </div>`;
   }).join('');
 }
-const roleSelect = (cur, disabled) => `<select class="input" id="uRole" ${disabled ? 'disabled' : ''}>
-  <option value="Operator" ${cur === 'Operator' ? 'selected' : ''}>Operator — hanya scanner</option>
-  <option value="Supervisor" ${cur === 'Supervisor' ? 'selected' : ''}>Supervisor — admin tanpa akses hapus</option>
-  ${canDelete() ? `<option value="Admin" ${cur === 'Admin' ? 'selected' : ''}>Admin — akses penuh</option>` : ''}</select>`;
+const roleSelect = (cur, disabled) => {
+  const list = state.roles.length ? state.roles : [{ nama: cur || 'Operator', keterangan: '' }];
+  return `<select class="input" id="uRole" ${disabled ? 'disabled' : ''}>${list
+    .filter(r => r.nama === cur || roleAllowed(r.nama))
+    .map(r => `<option value="${esc(r.nama)}" ${r.nama === cur ? 'selected' : ''}>${esc(r.nama)}${r.keterangan ? ' — ' + esc(r.keterangan) : ''}</option>`).join('')}</select>`;
+};
+/* Akun portal pelanggan: muncul bila role yang dipilih punya hak "Membuat Surat Pesanan". */
+const portalRole = name => { const r = state.roles.find(x => x.nama === name); return !!r && !r.sistem && r.perms.includes('sp.pesan'); };
+const portalField = cur => `<label class="f" id="uCustF"><span>Pelanggan (akun portal: hanya melihat pesanan pelanggan ini)</span>
+  <select class="input" id="uCust"><option value="">— Pilih pelanggan —</option>${(state.lookup.pelanggan || []).map(c =>
+    `<option value="${esc(c.id)}" ${c.id === cur ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></label>`;
+function bindPortalField(d) {
+  const sync = () => { $('#uCustF', d).hidden = !portalRole($('#uRole', d).value); };
+  $('#uRole', d).addEventListener('change', sync); sync();
+}
+const portalValue = d => ($('#uCustF', d).hidden ? '' : $('#uCust', d).value);
 async function addUser() {
   const res = await modal({
     title: 'Tambah user baru', icon: 'fa-user-plus', confirmText: 'Simpan user',
     html: `<label class="f"><span>Nama lengkap</span><input class="input" id="uName" autocomplete="off"></label>
            <label class="f"><span>Username</span><input class="input" id="uUser" autocapitalize="none" autocomplete="off" spellcheck="false"></label>
            <label class="f"><span>Password (min. 5 karakter)</span><input class="input" id="uPass" type="password" autocomplete="new-password"></label>
-           <label class="f"><span>Role</span>${roleSelect('Operator')}</label>`,
+           <label class="f"><span>Role</span>${roleSelect(state.roles.some(r => r.nama === 'Operator') ? 'Operator' : '')}</label>
+           ${portalField('')}`,
+    onOpen: bindPortalField,
     collect: d => {
-      const v = { name: $('#uName', d).value.trim(), username: $('#uUser', d).value.trim().toLowerCase(), password: $('#uPass', d).value, role: $('#uRole', d).value };
+      const v = { name: $('#uName', d).value.trim(), username: $('#uUser', d).value.trim().toLowerCase(), password: $('#uPass', d).value, role: $('#uRole', d).value,
+                  idPelanggan: portalValue(d) };
       if (!v.name || !v.username || !v.password) throw new Error('Semua kolom wajib diisi.');
       if (v.password.trim().length < 5) throw new Error('Password minimal 5 karakter.');
       return v;
@@ -1822,9 +2217,11 @@ async function editUser(username) {
     title: `Edit user ${u.username}`, icon: 'fa-user-pen', confirmText: 'Simpan perubahan',
     html: `<label class="f"><span>Nama lengkap</span><input class="input" id="uName" value="${esc(u.name)}" autocomplete="off"></label>
            <label class="f"><span>Role ${me ? '(tidak bisa mengubah role sendiri)' : ''}</span>${roleSelect(u.role, me)}</label>
+           ${portalField(u.idPelanggan || '')}
            <label class="f"><span>Password baru (kosongkan jika tidak diganti)</span><input class="input" id="uPass" type="password" autocomplete="new-password" placeholder="••••••••"></label>`,
+    onOpen: bindPortalField,
     collect: d => {
-      const v = { username: u.username, name: $('#uName', d).value.trim(), role: $('#uRole', d).value, password: $('#uPass', d).value.trim() };
+      const v = { username: u.username, name: $('#uName', d).value.trim(), role: $('#uRole', d).value, password: $('#uPass', d).value.trim(), idPelanggan: portalValue(d) };
       if (!v.name) throw new Error('Nama lengkap wajib diisi.');
       if (v.password && v.password.length < 5) throw new Error('Password minimal 5 karakter.');
       return v;
@@ -1853,10 +2250,15 @@ function bind() {
     $('#togglePass i').className = 'fa-regular ' + (show ? 'fa-eye-slash' : 'fa-eye');
   };
 
+  // Header atas diberi garis tipis begitu halaman digulir.
+  const onScroll = () => document.body.classList.toggle('scrolled', window.scrollY > 4);
+  window.addEventListener('scroll', onScroll, { passive: true }); onScroll();
   document.addEventListener('click', e => {
     const t = e.target;
     let el;
     if ((el = t.closest('[data-go]'))) { if (el.dataset.go === 'form' && state.formMode === 'edit') resetForm(); return go(el.dataset.go); }
+    if (t.closest('[data-menu]')) return openMenu();
+    if (t.closest('[data-rail]')) return toggleRail();
     if (t.closest('[data-theme-toggle]')) return applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
     if (t.closest('[data-logout]')) return logout();
     if ((el = t.closest('[data-undo]'))) return undoScan(+el.dataset.undo);
@@ -1897,7 +2299,20 @@ function bind() {
   $('#poForm').onsubmit = submitForm;
   $('#btnAddItem').onclick = () => addItemRow(null, true);
   $('#btnCancelEdit').onclick = () => { resetForm(); go('po'); };
-  $('#formItems').addEventListener('input', e => { e.target.classList.remove('invalid'); if (e.target.classList.contains('i-qty')) updateFormTotal(); });
+  $('#formItems').addEventListener('input', e => {
+    const el = e.target, row = el.closest('.irow');
+    el.classList.remove('invalid');
+    if (el.matches('.i-qty, .i-price, .i-unit')) updateFormTotal();
+  });
+  $('#formItems').addEventListener('focusout', e => {
+    const el = e.target;
+    if (el.matches('.i-price')) { const h = parsePrice(el.value); if (Number.isFinite(h) && h > 0) el.value = fmtPrice(h); }
+  });
+  $('#btnNewCust').onclick = async () => {
+    if (typeof editCustomer !== 'function') return;
+    const c = await editCustomer(null, $('#fPelanggan').value.trim());
+    if (c) { $('#fPelanggan').value = c.nama; $('#fPelanggan').classList.remove('invalid'); }
+  };
   $('#formItems').addEventListener('keydown', e => {
     // Enter di QTY baris terakhir = tambah baris baru (input cepat tanpa mouse)
     if (e.key !== 'Enter' || !e.target.classList.contains('i-qty')) return;
@@ -1906,6 +2321,9 @@ function bind() {
     if (row.nextElementSibling) $('.i-desc', row.nextElementSibling).focus(); else addItemRow(null, true);
   });
   $$('#poForm .fields .input').forEach(el => el.addEventListener('input', () => el.classList.remove('invalid')));
+
+  // Modul tambahan (js/admin.js)
+  (window.COA_MODULES || []).forEach(m => { if (m.bind) m.bind(); });
 
   // Master + user
   $('#masterAdd').onsubmit = addMaster;
@@ -1966,13 +2384,22 @@ async function init() {
   initPWA();
   $$('[data-date]').forEach(el => { el.outerHTML = dateField(el.dataset.date); });
   bind();
-  if (DEMO) { store.del('coa_session'); try { await loadScript('demo-mock.js'); } catch (e) { toast('demo-mock.js tidak ditemukan.', 'bad'); } }
+  if (DEMO) {
+    if (!UJI) store.del('coa_session');
+    const file = UJI ? '../uji/pglite-mock.js' : 'demo-mock.js';
+    try { await loadScript(file); } catch (e) { toast(file + ' tidak ditemukan.', 'bad'); }
+  }
 
   const saved = store.get('coa_session');
   if (saved && saved.token && saved.user) {
     state.token = saved.token; state.user = saved.user;
     showApp();
-    try { const boot = await api('bootstrap'); state.user = boot.user; applyBoot(boot); }
+    try {
+      const boot = await api('bootstrap');
+      // Hak akses bisa berubah sejak login terakhir (diatur Admin di menu Role): gambar ulang menu.
+      state.user = boot.user; store.set('coa_session', { token: state.token, user: boot.user });
+      showApp(); applyBoot(boot);
+    }
     catch (e) { if (e.code !== 'AUTH') toast(e.message, 'bad'); }
   } else {
     showLogin();

@@ -1,7 +1,7 @@
 {
-  "name": "System Register COA",
-  "short_name": "Register COA",
-  "description": "Scan dan verifikasi QR produk terhadap Purchase Order.",
+  "name": "Origara — Trace · Verify · Invoice",
+  "short_name": "Origara",
+  "description": "Origara — lacak setiap produk ber-QR dari pesanan, produksi, pengiriman, sampai invoice dan faktur pajak.",
   "lang": "id",
   "id": "./",
   "start_url": "./",

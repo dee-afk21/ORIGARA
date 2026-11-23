@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f7a6c">
+  <title>Origara Verify</title>
+  <link rel="icon" href="img/origara.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+  <style>
+    /* Portal verifikasi produk untuk klien. Halaman publik: tanpa login, hanya membaca satu kode. */
+    :root {
+      --bg: #f3f7f1; --card: #ffffff; --soft: #e9f4e6; --line: #cfe5c8; --ink: #1d2a1f; --ink-2: #4c5d50; --ink-3: #7b8a7e;
+      --green: #0b5d1e; --green-2: #1f7a33; --accent: #3fae2a; --bad: #c62f22; --bad-soft: #fdecea; --warn: #9a5b00; --warn-soft: #fff4dc;
+      color-scheme: light;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #0d140f; --card: #141e16; --soft: #18261b; --line: #284030; --ink: #e8f1e9; --ink-2: #b4c4b7; --ink-3: #85968a;
+        --green: #7fd88f; --green-2: #69c97a; --accent: #57c247; --bad: #ff8a80; --bad-soft: #3a1714; --warn: #ffcf70; --warn-soft: #33270f;
+        color-scheme: dark;
+      }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 15px/1.5 'Nunito Sans', system-ui, -apple-system, 'Segoe UI', sans-serif; color: var(--ink); background: var(--bg); min-height: 100dvh; }
+    .wrap { max-width: 1060px; margin: 0 auto; padding: 22px 16px 40px; }
+    header { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
+    header img { width: 52px; height: 52px; object-fit: contain; }
+    header b { display: block; font-size: 18px; font-weight: 800; color: var(--green); line-height: 1.2; }
+    header small { color: var(--ink-3); font-weight: 600; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px; box-shadow: 0 10px 30px -22px rgba(11, 93, 30, .35); }
+    h1 { font-size: 22px; margin: 0 0 4px; }
+    .muted { color: var(--ink-3); }
+    form { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+    input { flex: 1 1 260px; min-width: 0; height: 48px; padding: 0 14px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--card); color: var(--ink); font: inherit; font-size: 16px; }
+    input:focus { outline: none; border-color: var(--green-2); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 20%, transparent); }
+    button { height: 48px; padding: 0 18px; border-radius: 12px; border: 0; font: inherit; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; justify-content: center; }
+    .pri { background: var(--green); color: #fff; }
+    .sec { background: var(--soft); color: var(--green); border: 1.5px solid var(--line); }
+    button:disabled { opacity: .5; cursor: wait; }
+    #cam { margin-top: 12px; border-radius: 14px; overflow: hidden; background: #000; }
+    #result { margin-top: 18px; display: grid; gap: 16px; }
+    .verdict { display: flex; gap: 14px; align-items: center; padding: 16px 18px; border-radius: 14px; font-weight: 700; }
+    .verdict i { font-size: 30px; }
+    .verdict b { display: block; font-size: 19px; font-weight: 800; }
+    .verdict span { font-weight: 600; font-size: 14px; }
+    .v-ok { background: var(--soft); color: var(--green); border: 1px solid var(--line); }
+    .v-warn { background: var(--warn-soft); color: var(--warn); }
+    .v-bad { background: var(--bad-soft); color: var(--bad); }
+    .info { background: var(--soft); border: 1px solid var(--line); border-radius: 16px; padding: 22px 26px; }
+    .info h2 { margin: 0 0 12px; font-size: 20px; color: var(--green); display: flex; gap: 10px; align-items: center; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 26px; }
+    .row { display: flex; gap: 12px; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line); min-width: 0; }
+    .row span { color: var(--ink-2); font-weight: 600; white-space: nowrap; display: flex; gap: 8px; align-items: center; }
+    .row span i { width: 18px; text-align: center; color: var(--ink-2); }
+    .row b { text-align: right; font-weight: 800; overflow-wrap: anywhere; }
+    .row b.g { color: var(--green-2); }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+    footer { text-align: center; color: var(--ink-3); font-size: 13px; margin-top: 26px; }
+    .skel { height: 120px; border-radius: 16px; background: linear-gradient(90deg, var(--soft) 25%, var(--line) 50%, var(--soft) 75%); background-size: 200% 100%; animation: sh 1.2s linear infinite; }
+    @keyframes sh { to { background-position: -200% 0; } }
+    @media (max-width: 640px) {
+      .grid { grid-template-columns: minmax(0, 1fr); }
+      .info { padding: 18px; }
+      .card { padding: 18px; }
+      .row { flex-wrap: wrap; }
+      .row b { text-align: left; }
+      .actions button { flex: 1 1 auto; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <header><img id="logo" src="img/origara.png" alt=""><div><b id="comp">Origara Verify</b><small>Portal Verifikasi Produk · Product Authenticity Check</small></div></header>
+
+  <section class="card">
+    <h1>Cek keaslian produk</h1>
+    <p class="muted" style="margin:0">Scan QR code pada label produk, atau ketik kode item (serial number) yang tertera.</p>
+    <form id="f" autocomplete="off">
+      <input id="code" placeholder="Contoh: MLY260427A-01" autocapitalize="characters" spellcheck="false" enterkeyhint="search" aria-label="Kode produk">
+      <button class="pri" id="go" type="submit"><i class="fa-solid fa-magnifying-glass"></i> Verifikasi</button>
+      <button class="sec" id="camBtn" type="button"><i class="fa-solid fa-camera"></i> <span>Scan QR</span></button>
+    </form>
+    <div id="cam" hidden><div id="camView"></div></div>
+  </section>
+
+  <section id="result" aria-live="polite"></section>
+  <footer id="foot">Verified by Origara</footer>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/sertifikat.js"></script>
+<script>
+(function () {
+  'use strict';
+  const CONFIG = window.COA_CONFIG || {};
+  const UJI = new URLSearchParams(location.search).has('uji');
+  const $ = s => document.querySelector(s);
+  const e = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const usDate = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? `${MON[+m[2] - 1]} ${+m[3]}, ${m[1]}` : '-'; };
+  let last = null;
+
+  function loadScript(src) {
+    return new Promise((ok, no) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => no(new Error('Gagal memuat ' + src)); document.head.appendChild(s); });
+  }
+  async function api(action, ...args) {
+    const req = { action, args };
+    let res;
+    if (UJI) { if (!window.COA_MOCK) await loadScript('../uji/pglite-mock.js'); res = await window.COA_MOCK(req); }
+    else if (CONFIG.SUPABASE_URL) {
+      const r = await fetch(CONFIG.SUPABASE_URL.replace(/\/+$/, '') + '/rest/v1/rpc/coa_api', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', apikey: CONFIG.SUPABASE_KEY }, body: JSON.stringify({ req })
+      });
+      res = await r.json();
+    } else throw new Error('Portal verifikasi belum terhubung ke server.');
+    if (!res || !res.ok) throw new Error((res && res.error) || 'Terjadi kesalahan.');
+    return res.data;
+  }
+
+  const row = (icon, label, value, green) => `<div class="row"><span><i class="fa-solid ${icon}"></i>${label}</span><b class="${green ? 'g' : ''}">${e(value || '-')}</b></div>`;
+  function render(r) {
+    last = r;
+    if (r.perusahaan && r.perusahaan.nama) { $('#comp').textContent = r.perusahaan.nama; $('#foot').textContent = '© ' + new Date().getFullYear() + ' ' + r.perusahaan.nama + ' · Verified by Origara'; }
+    if (r.gambar && r.gambar.logo) $('#logo').src = r.gambar.logo;
+    let html;
+    if (r.status === 'tidak_terdaftar') {
+      html = `<div class="verdict v-bad"><i class="fa-solid fa-circle-xmark"></i><div><b>Kode tidak terdaftar</b><span>Kode "${e(r.kode)}" tidak ditemukan di sistem kami. Produk ini kemungkinan bukan produk asli, atau kode salah ketik. Silakan hubungi kami.</span></div></div>`;
+    } else if (!r.produk) {
+      html = `<div class="verdict v-warn"><i class="fa-solid fa-triangle-exclamation"></i><div><b>Kode terdaftar, belum dialokasikan</b><span>Kode ${e(r.itemCode)} terdaftar, tetapi belum tercatat sebagai produk yang diproduksi untuk pesanan mana pun.</span></div></div>`;
+    } else {
+      const p = r.produk;
+      html = `<div class="verdict v-ok"><i class="fa-solid fa-circle-check"></i><div><b>Produk asli — terverifikasi</b><span>${r.status === 'terkirim' ? 'Produk ini tercatat diproduksi dan dikirim oleh kami.' : 'Produk ini tercatat diproduksi oleh kami (belum tercatat dikirim).'}</span></div></div>
+        <div class="info">
+          <h2><i class="fa-solid fa-circle-info"></i> Product Information</h2>
+          <div class="grid">
+            ${row('fa-barcode', 'Item Code', r.itemCode, true)}
+            ${row('fa-users', 'Customer', p.pelanggan)}
+            ${row('fa-palette', 'Color', p.warna)}
+            ${row('fa-ruler', 'Size', p.ukuran)}
+            ${row('fa-tag', 'Description', p.deskripsi)}
+            ${row('fa-file-lines', 'PO Number', p.noPO, true)}
+            ${row('fa-calendar', 'PO Date', usDate(p.tglPO))}
+            ${row('fa-truck', 'Ship Date', p.tglKirim ? usDate(p.tglKirim) : '-')}
+          </div>
+          <div class="actions"><button class="pri" id="cert" type="button"><i class="fa-solid fa-award"></i> Cetak Sertifikat (PDF)</button></div>
+        </div>`;
+    }
+    $('#result').innerHTML = html;
+    const b = $('#cert'); if (b) b.onclick = printCert;
+  }
+
+  /** Isi QR di sertifikat: isi QR produk bila berupa alamat web, selain itu tautan ke halaman ini. */
+  function qrText(r) {
+    if (/^https?:\/\//i.test(r.qr || '')) return r.qr;
+    return location.origin + location.pathname + '?code=' + encodeURIComponent(r.itemCode);
+  }
+  function printCert() {
+    const r = last; if (!r || !r.produk) return;
+    const p = r.produk, n = new Date(), pad = x => String(x).padStart(2, '0');
+    const nama = r.perusahaan && r.perusahaan.nama || '';
+    const data = { namaPerusahaan: nama.replace(/\b\w+/g, w => w[0] + w.slice(1).toLowerCase()).replace(/^Pt\b/, 'PT'),
+      serial: r.itemCode, batch: r.batch, deskripsi: p.deskripsi, pelanggan: p.pelanggan, noPO: p.noPO, tglPO: p.tglPO,
+      warna: p.warna, ukuran: p.ukuran, tglProduksi: p.tglProduksi, tglKirim: p.tglKirim,
+      tglTerbit: `${n.getFullYear()}-${pad(n.getMonth() + 1)}-${pad(n.getDate())}` };
+    const assets = { logo: (r.gambar && r.gambar.logo) || '', ttdImg: (r.gambar && r.gambar.ttd) || '',
+      ttd: r.ttd || {}, qrText: qrText(r) };
+    try { COA_PRINT.open('Sertifikat ' + r.itemCode, [COA_CERT.html(r.sertifikat || {}, data, assets)], COA_CERT.CSS); }
+    catch (err) { alert(err.message); }
+  }
+
+  async function verify(code) {
+    code = String(code || '').trim();
+    if (!code) return;
+    $('#go').disabled = true;
+    $('#result').innerHTML = '<div class="skel"></div>';
+    try {
+      const r = await api('verifyProduct', code, true);
+      render(r);
+      const u = new URL(location.href); u.searchParams.set('code', r.itemCode || code); history.replaceState(null, '', u);
+    } catch (err) {
+      $('#result').innerHTML = `<div class="verdict v-bad"><i class="fa-solid fa-plug-circle-xmark"></i><div><b>Tidak dapat memeriksa</b><span>${e(err.message.includes('fetch') ? 'Tidak dapat terhubung ke server. Periksa koneksi internet.' : err.message)}</span></div></div>`;
+    } finally { $('#go').disabled = false; }
+  }
+
+  /* kamera (pustaka dimuat hanya saat tombol ditekan) */
+  let cam = null;
+  async function toggleCam() {
+    if (cam) { const c = cam; cam = null; $('#cam').hidden = true; $('#camBtn span').textContent = 'Scan QR'; c.stop().then(() => c.clear()).catch(() => {}); return; }
+    try {
+      await loadScript('https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js');
+      $('#cam').hidden = false;
+      cam = new Html5Qrcode('camView');
+      await cam.start({ facingMode: 'environment' }, { fps: 10, qrbox: (w, h) => { const s = Math.floor(Math.min(w, h) * .72); return { width: s, height: s }; } },
+        text => { $('#code').value = text; toggleCam(); verify(text); }, () => {});
+      $('#camBtn span').textContent = 'Tutup kamera';
+    } catch (err) { $('#cam').hidden = true; cam = null; alert('Kamera tidak bisa dibuka. Izinkan akses kamera, atau ketik kodenya.'); }
+  }
+
+  $('#f').onsubmit = ev => { ev.preventDefault(); verify($('#code').value); };
+  $('#camBtn').onclick = toggleCam;
+  COA_CERT.loadQR().catch(() => {});      // dimuat lebih dulu supaya tombol cetak langsung bekerja
+  const q = new URLSearchParams(location.search);
+  const start = q.get('code') || q.get('q');
+  if (start) { $('#code').value = start; verify(start); } else $('#code').focus();
+})();
+</script>
+</body>
+</html>
