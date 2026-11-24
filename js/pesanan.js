@@ -1,248 +1,252 @@
 /* =====================================================================
-   Origara v0.4 — Surat Pesanan (portal pelanggan).
-   - "Pesanan Saya"  : akun pelanggan membuat Surat Pesanan dan memantau pesanannya
-                       (progres produksi, Surat Jalan, invoice) — hanya miliknya sendiri.
-   - "Surat Pesanan" : staf menyetujui (menjadi PO, isi MOP & harga) atau menolak.
-   Memakai fungsi bersama dari index.html, COA_PRINT, COA_DOC, dan COA_INV.
+   Origara v0.7 — Surat Penawaran (pengganti Surat Pesanan).
+   Untuk klien yang TIDAK menerbitkan PO:
+     staf membuat penawaran (barang + harga) -> cetak / kirim PDF ke klien ->
+     setelah klien setuju (chat / telepon) staf menekan "Disetujui klien" -> otomatis jadi PO.
+   - Menu "Penawaran" (staf, hak akses pnw.kelola).
+   - Menu "Penawaran Saya" (akun pelanggan): melihat penawaran, progres, Surat Jalan & invoice miliknya.
+   Template cetak ada di js/penawaran-cetak.js (COA_PNW), dipakai juga oleh pesan.html.
    ===================================================================== */
 (function () {
   'use strict';
-  const ui = { mine: null, all: null, query: '', status: 'Diajukan', timer: 0 };
-  const ST = { Diajukan: 'warn', Disetujui: 'ok', Ditolak: 'warn', Dibatalkan: '' };
-  const dmy = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? `${m[3]}/${m[2]}/${m[1]}` : (iso || ''); };
-  const stTag = s => `<span class="tag ${ST[s.status] || ''}">${esc(s.status === 'Ditolak' ? 'Ditolak' : s.status)}</span>`;
-  const totalQty = s => s.items.reduce((a, i) => a + i.qty, 0);
-  const itemsLine = s => s.items.slice(0, 4).map(i => `${i.deskripsi} ${i.warna} ${i.ukuran} ×${fmt(i.qty)}`).join(' · ') + (s.items.length > 4 ? ` · +${s.items.length - 4} baris` : '');
+  const ui = { list: null, mine: null, query: '', status: 'Menunggu', timer: 0 };
+  const ST = { Menunggu: 'warn', Disetujui: 'ok', Ditolak: '', Batal: '' };
+  const ST_LABEL = { Menunggu: 'Menunggu jawaban klien', Disetujui: 'Disetujui · jadi PO', Ditolak: 'Ditolak klien', Batal: 'Dibatalkan' };
   const JN = { PROFORMA: 'Proforma', INVOICE: 'Invoice', DP: 'Invoice DP', PELUNASAN: 'Invoice Pelunasan' };
+  const dmy = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? `${m[3]}/${m[2]}/${m[1]}` : (iso || ''); };
+  const plusDaysDMY = n => { const d = new Date(Date.now() + n * 864e5), p = x => String(x).padStart(2, '0'); return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()}`; };
+  const totalQty = s => s.items.reduce((a, i) => a + i.qty, 0);
+  const itemsLine = s => s.items.slice(0, 3).map(i => `${i.deskripsi} ${i.warna} ${i.ukuran} ×${fmt(i.qty)}`).join(' · ') + (s.items.length > 3 ? ` · +${s.items.length - 3} baris` : '');
+  const stTag = s => `<span class="tag ${ST[s.status] || ''}">${esc(ST_LABEL[s.status] || s.status)}</span>`;
 
   /* =====================================================================
-     PESANAN SAYA (akun pelanggan)
+     DAFTAR PENAWARAN (staf)
+     ===================================================================== */
+  async function loadList(btn) {
+    if (!ui.list) $('#pnwList').innerHTML = '<div class="skel"></div><div class="skel"></div>';
+    const list = await run(btn, () => api('listPNW', ui.query, ui.status));
+    if (list) { ui.list = list; renderList(); }
+  }
+  function renderList() {
+    const chips = [['Menunggu', 'Menunggu jawaban'], ['', 'Semua'], ['Disetujui', 'Disetujui'], ['Ditolak', 'Ditolak'], ['Batal', 'Dibatalkan']];
+    $('#pnwChips').innerHTML = chips.map(c => `<button type="button" class="chip ${ui.status === c[0] ? 'on' : ''}" data-pst="${c[0]}">${c[1]}</button>`).join('');
+    const list = ui.list || [];
+    if (!list.length) {
+      $('#pnwList').innerHTML = `<div class="card empty" style="grid-column:1/-1"><i class="fa-solid fa-file-signature"></i><b>${ui.query ? 'Tidak ditemukan' : 'Belum ada penawaran di sini'}</b>Tekan "Buat penawaran" untuk membuat Surat Penawaran baru.</div>`;
+      return;
+    }
+    $('#pnwList').innerHTML = list.map(s => `
+      <div class="rec" data-pnw="${esc(s.no)}">
+        <div class="rec-h">
+          <div class="t"><b class="mono">${esc(s.no)}</b><small>${esc(s.pelanggan)} · ${esc(dmy(s.tanggal))}</small></div>
+          ${stTag(s)}
+        </div>
+        ${s.perihal ? `<p><b>${esc(s.perihal)}</b></p>` : ''}
+        <p>${esc(itemsLine(s))}</p>
+        <div class="tags">
+          <span class="tag">${fmt(totalQty(s))} pcs</span>
+          <span class="tag ok">Total ${rupiah(s.total)}</span>
+          ${s.berlaku ? `<span class="tag ${s.kedaluwarsa ? 'warn' : ''}">${s.kedaluwarsa ? '<i class="fa-solid fa-clock"></i> Lewat masa berlaku ' : 'Berlaku s/d '}${esc(dmy(s.berlaku))}</span>` : ''}
+          ${s.noPO ? `<span class="tag ok">PO ${esc(s.noPO)}</span>` : ''}
+        </div>
+        ${s.status === 'Ditolak' && s.alasan ? `<div class="note">Alasan: ${esc(s.alasan)}</div>` : ''}
+        ${s.status === 'Batal' && s.alasan ? `<p class="hint">Dibatalkan: ${esc(s.alasan)}</p>` : ''}
+        <div class="row" style="justify-content:flex-end;flex-wrap:wrap">
+          <button class="btn sm" data-pact="print"><i class="fa-solid fa-print"></i> Cetak</button>
+          ${s.status === 'Menunggu' ? `
+            <button class="btn sm" data-pact="edit"><i class="fa-solid fa-pen"></i> Edit</button>
+            <button class="btn sm t-ok" data-pact="ok"><i class="fa-solid fa-handshake"></i> Disetujui klien</button>
+            <button class="btn sm icon t-bad" data-pact="tolak" title="Klien menolak" aria-label="Klien menolak"><i class="fa-solid fa-thumbs-down"></i></button>
+            <button class="btn sm icon t-bad" data-pact="batal" title="Batalkan penawaran" aria-label="Batalkan penawaran"><i class="fa-solid fa-ban"></i></button>` : ''}
+          ${s.status === 'Ditolak' || s.status === 'Batal' ? '<button class="btn sm" data-pact="buka"><i class="fa-solid fa-rotate-left"></i> Buka lagi</button>' : ''}
+        </div>
+        <small class="hint">Dibuat ${esc(s.dibuatOleh)}${s.diubahOleh ? ` · diubah ${esc(s.diubahOleh)}` : ''}${s.diprosesOleh ? ` · diproses ${esc(s.diprosesOleh)}` : ''}</small>
+      </div>`).join('');
+  }
+
+  /* =====================================================================
+     BUAT / EDIT PENAWARAN
+     ===================================================================== */
+  function itemRow(it = {}) {
+    return `<div class="sp-row pnw-row">
+      <input class="input s-desc" list="dlPnwDesc" value="${esc(it.deskripsi)}" placeholder="Deskripsi barang" aria-label="Deskripsi barang">
+      <input class="input s-warna" list="dlWarna" value="${esc(it.warna)}" placeholder="Warna" aria-label="Warna" autocomplete="off">
+      <input class="input s-size" list="dlUkuran" value="${esc(it.ukuran)}" placeholder="Ukuran" aria-label="Ukuran" autocomplete="off">
+      <input class="input s-qty num" type="number" min="1" inputmode="numeric" value="${esc(it.qty)}" placeholder="Qty" aria-label="Jumlah">
+      <select class="input s-unit" aria-label="Satuan">${unitOptions(it.satuan || 'UM.0021')}</select>
+      <div class="rp"><input class="input num s-price" inputmode="decimal" value="${it.harga ? esc(fmtPrice(it.harga)) : ''}" placeholder="Harga" aria-label="Harga satuan"></div>
+      <button type="button" class="btn icon t-bad" data-rowdel aria-label="Hapus baris"><i class="fa-solid fa-trash"></i></button>
+    </div>`;
+  }
+  async function editPNW(no) {
+    let cur = null;
+    if (no) { const r = await run(null, () => api('getPNW', no)); if (!r) return; cur = r.pnw; }
+    const custs = (state.lookup.pelanggan || []).filter(c => c.aktif !== false || (cur && c.id === cur.idPelanggan));
+    let prep = null;
+    const res = await modal({
+      title: no ? `Edit ${no}` : 'Buat Surat Penawaran', text: no ? 'Perubahan tersimpan dengan nomor yang sama.' : 'Barang + harga yang ditawarkan ke klien.',
+      icon: 'fa-file-signature', wide: true, xwide: true, sticky: true, noEnter: true, confirmText: no ? 'Simpan perubahan' : 'Simpan penawaran',
+      html: `
+        <div class="f2">
+          <label class="f w2"><span>Pelanggan *</span><select class="input" id="pCust" ${no ? 'disabled' : ''}><option value="">— Pilih pelanggan —</option>${custs.map(c =>
+            `<option value="${esc(c.id)}" ${cur && cur.idPelanggan === c.id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></label>
+          <div class="f"><span>Tanggal penawaran *</span>${dateField('pTgl', cur ? dmy(cur.tanggal) : todayDMY())}</div>
+          <div class="f"><span>Berlaku sampai</span>${dateField('pBerlaku', cur ? dmy(cur.berlaku) : plusDaysDMY(14))}</div>
+          <label class="f"><span>Perihal</span><input class="input" id="pPerihal" value="${esc(cur ? cur.perihal : '')}" placeholder="mis. Penawaran seragam kerja"></label>
+          <label class="f"><span>Up. (kepada)</span><input class="input" id="pUp" value="${esc(cur ? cur.up : '')}" placeholder="mis. Bp. Andi / Dept. Procurement"></label>
+        </div>
+        <div class="sub-h">Barang & harga <button type="button" class="btn sm dashed" id="pAdd"><i class="fa-solid fa-plus"></i> Tambah baris</button></div>
+        <div class="pnw-head"><div>Deskripsi</div><div>Warna</div><div>Ukuran</div><div>Qty</div><div>Satuan</div><div>Harga satuan</div><div></div></div>
+        <div id="pRows" style="display:grid;gap:8px">${cur ? cur.items.map(itemRow).join('') : itemRow()}</div>
+        <p class="hint" id="pSum"></p>
+        <datalist id="dlPnwDesc"></datalist>
+        <label class="f"><span>Syarat &amp; ketentuan</span><textarea class="input" id="pSyarat" rows="4" placeholder="mis. Harga belum termasuk ongkir. Pembayaran DP 50%, pelunasan sebelum kirim. Waktu produksi 14 hari kerja.">${esc(cur ? cur.syarat : '')}</textarea></label>
+        <label class="f"><span>Catatan (opsional)</span><textarea class="input" id="pCat" rows="2">${esc(cur ? cur.catatan : '')}</textarea></label>`,
+      onOpen: d => {
+        const box = $('#pRows', d);
+        const sum = () => {
+          let q = 0, sub = 0;
+          $$('.pnw-row', d).forEach(r => { const n = parseInt($('.s-qty', r).value, 10) || 0, h = parsePrice($('.s-price', r).value); q += n; sub += Number.isFinite(h) ? n * h : 0; });
+          $('#pSum', d).textContent = `${$$('.pnw-row', d).length} baris · ${fmt(q)} pcs · subtotal ${rupiah(sub)} (PPN dihitung otomatis di dokumen)`;
+        };
+        const loadPrep = async id => {
+          prep = null; if (!id) return;
+          try { prep = await api('pnwPrepare', id); } catch (e) { toast(e.message, 'bad'); return; }
+          $('#dlPnwDesc', d).innerHTML = prep.deskripsi.map(x => `<option value="${esc(x)}"></option>`).join('');
+          if (!no && !$('#pUp', d).value) $('#pUp', d).value = prep.pelanggan.up || '';
+          if (!$('#pSyarat', d).value) $('#pSyarat', d).value = prep.syarat || '';
+        };
+        $('#pCust', d).onchange = e => loadPrep(e.target.value);
+        if (cur) loadPrep(cur.idPelanggan);
+        $('#pAdd', d).onclick = () => {
+          const last = $('.pnw-row:last-child', box);
+          box.insertAdjacentHTML('beforeend', itemRow(last ? { deskripsi: $('.s-desc', last).value, warna: $('.s-warna', last).value, satuan: $('.s-unit', last).value, harga: parsePrice($('.s-price', last).value) || '' } : {}));
+          $('.pnw-row:last-child .s-size', box).focus(); sum();
+        };
+        box.addEventListener('click', e => { const b = e.target.closest('[data-rowdel]'); if (b && $$('.pnw-row', box).length > 1) { b.closest('.pnw-row').remove(); sum(); } });
+        box.addEventListener('input', sum); sum();
+      },
+      collect: d => {
+        const id = $('#pCust', d).value;
+        if (!id) throw new Error('Pilih pelanggan.');
+        const v = k => $('#' + k, d).value.trim();
+        if (!validDMY(v('pTgl'))) throw new Error('Tanggal penawaran tidak valid. Format: DD/MM/YYYY.');
+        if (v('pBerlaku') && !validDMY(v('pBerlaku'))) throw new Error('Tanggal berlaku tidak valid. Format: DD/MM/YYYY.');
+        const items = $$('.pnw-row', d).map((r, i) => {
+          const it = { deskripsi: $('.s-desc', r).value.trim(), idWarna: idOf('warna', $('.s-warna', r).value), idUkuran: idOf('ukuran', $('.s-size', r).value),
+                       qtyTarget: parseInt($('.s-qty', r).value, 10) || 0, satuan: $('.s-unit', r).value, harga: parsePrice($('.s-price', r).value) };
+          if (!it.deskripsi || !it.idWarna || !it.idUkuran) throw new Error(`Lengkapi barang baris ke-${i + 1} (deskripsi, warna, ukuran).`);
+          if (it.qtyTarget < 1) throw new Error(`Isi jumlah barang baris ke-${i + 1}.`);
+          if (!Number.isFinite(it.harga) || it.harga <= 0) { $('.s-price', r).classList.add('invalid'); throw new Error(`Isi harga barang baris ke-${i + 1}.`); }
+          return it;
+        });
+        return { no: no || '', idPelanggan: id, tanggal: v('pTgl'), berlaku: v('pBerlaku'), perihal: v('pPerihal'), up: v('pUp'), syarat: v('pSyarat'), catatan: v('pCat'), items };
+      },
+      action: data => api('savePNW', data)
+    });
+    if (!res) return;
+    toast(res.message, 'ok');
+    if (!no) { ui.status = 'Menunggu'; ui.query = ''; $('#pnwSearch').value = ''; }
+    loadList();
+    modal({
+      title: 'Penawaran tersimpan', text: res.no, icon: 'fa-circle-check', tone: 'ok', noConfirm: true, cancelText: 'Tutup',
+      html: `<p class="hint">Cetak / simpan PDF lalu kirim ke klien. Setelah klien setuju, tekan "Disetujui klien" pada penawaran ini.</p>
+             <button type="button" class="btn primary block" data-p><i class="fa-solid fa-print"></i> Cetak Surat Penawaran</button>`,
+      onOpen: (d, finish) => { $('[data-p]', d).onclick = () => { printPNW(res.no); finish(null); }; }
+    });
+  }
+
+  /* =====================================================================
+     STATUS: DISETUJUI (JADI PO) / DITOLAK / BATAL / BUKA LAGI
+     ===================================================================== */
+  async function approve(no) {
+    const s = (ui.list || []).find(x => x.no === no); if (!s) return;
+    const res = await modal({
+      title: `Klien menyetujui ${no}?`, text: `${s.pelanggan} · total ${rupiah(s.total)}`, icon: 'fa-handshake', tone: 'ok', wide: true,
+      confirmText: 'Setujui & buat PO',
+      html: `
+        ${s.kedaluwarsa ? '<div class="note">Penawaran ini sudah lewat masa berlaku. Pastikan harga masih sesuai.</div>' : ''}
+        <div class="f2">
+          <label class="f"><span>Nomor PO</span><input class="input mono" id="aPO" value="${esc(no)}"></label>
+          <label class="f"><span>MOP *</span><input class="input" id="aMOP" placeholder="mis. MCTG/26/13048"></label>
+          <div class="f"><span>Tanggal PO (tanggal klien setuju) *</span>${dateField('aTgl', todayDMY())}</div>
+          <div class="f"><span>Tanggal produksi *</span>${dateField('aProd', todayDMY())}</div>
+        </div>
+        <div class="list" style="padding:0">${s.items.map(i => `<div class="li"><div class="t"><b>${esc(i.deskripsi)}</b><small>${esc(i.warna)} · ${esc(i.ukuran)} · ${fmt(i.qty)} × ${rupiah(i.harga)}</small></div></div>`).join('')}</div>
+        <p class="hint">Barang, jumlah, harga, dan satuan ikut menjadi PO. Nomor PO bawaan = nomor penawaran (tampil di invoice dan XML Coretax sebagai nomor PO).</p>`,
+      collect: d => {
+        const mop = $('#aMOP', d).value.trim(), tgl = $('#aTgl', d).value, prod = $('#aProd', d).value;
+        if (!mop) throw new Error('MOP wajib diisi.');
+        if (!validDMY(tgl)) throw new Error('Tanggal PO tidak valid.');
+        if (!validDMY(prod)) throw new Error('Tanggal produksi tidak valid.');
+        return { no, noPO: $('#aPO', d).value.trim(), mop, tglPO: tgl, tglProduksi: prod };
+      },
+      action: data => api('approvePNW', data)
+    });
+    if (!res) return;
+    toast(res.message, 'ok');
+    if (res.activePO) { state.activePO = res.activePO; if (typeof renderPOSelect === 'function') renderPOSelect(); }
+    loadList();
+  }
+  async function setStatus(no, st) {
+    const cfg = {
+      Ditolak: { title: `Klien menolak ${no}?`, icon: 'fa-thumbs-down', confirm: 'Tandai ditolak', label: 'Alasan klien menolak *', need: true },
+      Batal: { title: `Batalkan ${no}?`, icon: 'fa-ban', confirm: 'Batalkan penawaran', label: 'Alasan (opsional)', need: false },
+      Menunggu: { title: `Buka lagi ${no}?`, icon: 'fa-rotate-left', confirm: 'Buka lagi', label: '', need: false }
+    }[st];
+    const res = await modal({
+      title: cfg.title, icon: cfg.icon, tone: st === 'Menunggu' ? '' : 'bad', danger: st !== 'Menunggu', confirmText: cfg.confirm,
+      text: st === 'Menunggu' ? 'Penawaran kembali berstatus "Menunggu jawaban klien" dan bisa diedit lagi.' : '',
+      html: cfg.label ? `<label class="f"><span>${cfg.label}</span><input class="input" id="sAl" placeholder="${st === 'Ditolak' ? 'mis. harga terlalu tinggi' : ''}"></label>` : '',
+      collect: d => { const v = cfg.label ? $('#sAl', d).value.trim() : ''; if (cfg.need && !v) throw new Error('Isi alasannya.'); return v; },
+      action: al => api('pnwStatus', no, st, al)
+    });
+    if (res) { toast(res.message, 'ok'); loadList(); }
+  }
+
+  /* =====================================================================
+     CETAK
+     ===================================================================== */
+  async function printPNW(no) {
+    let w = null;
+    try { w = window.open('', '_blank'); } catch (e) { w = null; }
+    if (w) w.document.write('<p style="font:16px Arial;padding:24px">Menyiapkan dokumen…</p>');
+    try { COA_PNW.print(await api('getPNW', no), w); }
+    catch (e) { if (w) w.close(); if (e.code !== 'AUTH') toast(e.message, 'bad'); }
+  }
+
+  /* =====================================================================
+     PENAWARAN SAYA (akun pelanggan)
      ===================================================================== */
   async function loadMine(btn) {
     if (!ui.mine) $('#myList').innerHTML = '<div class="skel"></div><div class="skel"></div>';
-    const list = await run(btn, () => api('listSP', '', ''));
+    const list = await run(btn, () => api('listPNW', '', ''));
     if (list) { ui.mine = list; renderMine(); }
   }
   function renderMine() {
     $('#myWho').textContent = state.user.pelanggan || '';
     const list = ui.mine || [];
     if (!list.length) {
-      $('#myList').innerHTML = '<div class="card empty"><i class="fa-solid fa-cart-shopping"></i><b>Belum ada pesanan</b>Tekan "Buat Surat Pesanan" untuk memesan barang.</div>';
+      $('#myList').innerHTML = '<div class="card empty" style="grid-column:1/-1"><i class="fa-solid fa-file-signature"></i><b>Belum ada penawaran</b>Penawaran dari kami akan muncul di sini.</div>';
       return;
     }
     $('#myList').innerHTML = list.map(s => {
-      const pr = s.progres || { target: 0, selesai: 0 };
+      const pr = s.progres || { target: 0, selesai: 0, dikirim: 0 };
       const pct = pr.target ? Math.min(100, Math.round(pr.selesai * 100 / pr.target)) : 0;
-      return `<div class="rec" data-sp="${esc(s.no)}">
-        <div class="rec-h">
-          <div class="t"><b class="mono">${esc(s.no)}</b><small>${esc(dmy(s.tanggal))}${s.refPelanggan ? ' · Ref ' + esc(s.refPelanggan) : ''}${s.tglButuh ? ' · dibutuhkan ' + esc(dmy(s.tglButuh)) : ''}</small></div>
-          ${stTag(s)}
-        </div>
+      return `<div class="rec" data-pnw="${esc(s.no)}">
+        <div class="rec-h"><div class="t"><b class="mono">${esc(s.no)}</b><small>${esc(dmy(s.tanggal))}${s.perihal ? ' · ' + esc(s.perihal) : ''}</small></div>
+          <span class="tag ${ST[s.status] || ''}">${esc({ Menunggu: 'Menunggu persetujuan Anda', Disetujui: 'Disetujui', Ditolak: 'Ditolak' }[s.status] || s.status)}</span></div>
         <p>${esc(itemsLine(s))}</p>
-        <div class="tags"><span class="tag">${fmt(totalQty(s))} pcs</span><span class="tag">Kirim ke ${esc(s.penerima)}</span></div>
-        ${s.status === 'Ditolak' ? `<div class="note">Alasan: ${esc(s.alasan || '-')}</div>` : ''}
+        <div class="tags"><span class="tag">${fmt(totalQty(s))} pcs</span><span class="tag ok">Total ${rupiah(s.total)}</span>${s.berlaku ? `<span class="tag">Berlaku s/d ${esc(dmy(s.berlaku))}</span>` : ''}</div>
         ${s.status === 'Disetujui' ? `
           <div class="tags"><span class="tag ok">No. PO ${esc(s.noPO)}</span></div>
-          <div><small class="hint">Produksi ${fmt(pr.selesai)} / ${fmt(pr.target)} pcs</small><div class="bar ${pct >= 100 ? 'full' : ''}"><i style="width:${pct}%"></i></div></div>
-          ${s.suratJalan.length ? `<div class="sub-h">Pengiriman</div>${s.suratJalan.map(d => `<div class="row" style="justify-content:space-between"><span class="mono">${esc(d.no)} · ${esc(dmy(d.tanggal))} · ${fmt(d.qty)} pcs</span><span class="row"><button class="btn sm" data-myp="dn:${esc(d.no)}">Surat Jalan</button><button class="btn sm" data-myp="pl:${esc(d.no)}">Packing List</button></span></div>`).join('')}` : ''}
-          ${s.tagihan.length ? `<div class="sub-h">Tagihan</div>${s.tagihan.map(v => `<div class="row" style="justify-content:space-between"><span><span class="mono">${esc(v.no)}</span> · ${esc(JN[v.jenis] || v.jenis)} · ${rupiah(v.total)}</span><button class="btn sm" data-myp="inv:${esc(v.no)}"><i class="fa-solid fa-print"></i></button></div>`).join('')}` : ''}` : ''}
-        <div class="row" style="justify-content:flex-end">
-          <button class="btn sm" data-myp="sp:${esc(s.no)}"><i class="fa-solid fa-print"></i> Cetak Surat Pesanan</button>
-          ${s.status === 'Diajukan' ? '<button class="btn sm t-bad" data-mycancel><i class="fa-solid fa-xmark"></i> Batalkan</button>' : ''}
-        </div>
+          <div><small class="hint">Produksi ${fmt(pr.selesai)} / ${fmt(pr.target)} pcs · dikirim ${fmt(pr.dikirim)} pcs</small><div class="bar ${pct >= 100 ? 'full' : ''}"><i style="width:${pct}%"></i></div></div>
+          ${(s.suratJalan || []).length ? `<div class="sub-h">Pengiriman</div>${s.suratJalan.map(d => `<div class="row" style="justify-content:space-between;flex-wrap:wrap"><span class="mono">${esc(d.no)} · ${esc(dmy(d.tanggal))} · ${fmt(d.qty)} pcs</span><span class="row"><button class="btn sm" data-myp="dn:${esc(d.no)}">Surat Jalan</button><button class="btn sm" data-myp="pl:${esc(d.no)}">Packing List</button></span></div>`).join('')}` : ''}
+          ${(s.tagihan || []).length ? `<div class="sub-h">Tagihan</div>${s.tagihan.map(v => `<div class="row" style="justify-content:space-between"><span><span class="mono">${esc(v.no)}</span> · ${esc(JN[v.jenis] || v.jenis)} · ${rupiah(v.total)}</span><button class="btn sm" data-myp="inv:${esc(v.no)}"><i class="fa-solid fa-print"></i></button></div>`).join('')}` : ''}` : ''}
+        ${s.status === 'Ditolak' && s.alasan ? `<div class="note">Alasan: ${esc(s.alasan)}</div>` : ''}
+        <div class="row" style="justify-content:flex-end"><button class="btn sm" data-myp="pnw:${esc(s.no)}"><i class="fa-solid fa-print"></i> Cetak penawaran</button></div>
       </div>`;
     }).join('');
-  }
-
-  function itemRowSP(it = {}) {
-    return `<div class="sp-row">
-      <input class="input s-desc" list="dlSpDesc" value="${esc(it.deskripsi)}" placeholder="Deskripsi barang" aria-label="Deskripsi barang">
-      <input class="input s-warna" list="dlWarna" value="${esc(it.warna)}" placeholder="Warna" aria-label="Warna" autocomplete="off">
-      <input class="input s-size" list="dlUkuran" value="${esc(it.ukuran)}" placeholder="Ukuran" aria-label="Ukuran" autocomplete="off">
-      <input class="input s-qty num" type="number" min="1" inputmode="numeric" value="${esc(it.qty)}" placeholder="Jumlah" aria-label="Jumlah">
-      <button type="button" class="btn icon t-bad" data-spdel aria-label="Hapus baris"><i class="fa-solid fa-trash"></i></button>
-    </div>`;
-  }
-  async function newSP() {
-    const prep = await run($('#btnNewSP'), () => api('spPrepare', ''));
-    if (!prep) return;
-    const c = prep.pelanggan;
-    const addr = [...(c.kirim || []).map((k, i) => `<option value="k${i}">${esc(k.label || 'Alamat kirim ' + (i + 1))}</option>`),
-      c.alamatTagih ? '<option value="tagih">Alamat kantor / penagihan</option>' : '', '<option value="manual">Ketik alamat lain</option>'].join('');
-    const res = await modal({
-      title: 'Buat Surat Pesanan', text: `${c.nama} · nomor ${prep.nomorBerikutnya} (perkiraan)`, icon: 'fa-cart-shopping', wide: true, sticky: true, confirmText: 'Kirim pesanan',
-      html: `
-        <div class="sub-h">Barang yang dipesan <button type="button" class="btn sm dashed" id="spAdd"><i class="fa-solid fa-plus"></i> Tambah baris</button></div>
-        <div id="spRows" style="display:grid;gap:8px">${itemRowSP()}</div>
-        <p class="hint" id="spSum"></p>
-        <datalist id="dlSpDesc">${prep.deskripsi.map(x => `<option value="${esc(x)}"></option>`).join('')}</datalist>
-        <div class="f2">
-          <label class="f"><span>No. referensi Anda (opsional)</span><input class="input" id="spRef" placeholder="mis. nomor permintaan internal"></label>
-          <div class="f"><span>Tanggal dibutuhkan (opsional)</span>${dateField('spButuh', '')}</div>
-        </div>
-        <div class="sub-h">Dikirim ke</div>
-        <label class="f"><span>Alamat</span><select class="input" id="spAddr">${addr}</select></label>
-        <div class="f2">
-          <label class="f w2"><span>Nama penerima *</span><input class="input" id="spNama" value="${esc(c.nama)}"></label>
-          <label class="f w2"><span>Alamat kirim *</span><textarea class="input" id="spAlamat" rows="2"></textarea></label>
-          <label class="f"><span>Attn</span><input class="input" id="spAttn"></label>
-          <label class="f"><span>Telepon</span><input class="input" id="spTelp" inputmode="tel"></label>
-          <label class="f w2"><span>Catatan</span><textarea class="input" id="spCat" rows="2"></textarea></label>
-        </div>`,
-      onOpen: d => {
-        const box = $('#spRows', d);
-        const sum = () => { const n = $$('.s-qty', d).reduce((a, i) => a + (parseInt(i.value, 10) || 0), 0); $('#spSum', d).textContent = `${$$('.sp-row', d).length} baris · ${fmt(n)} pcs`; };
-        const fill = () => {
-          const v = $('#spAddr', d).value;
-          const k = v[0] === 'k' ? c.kirim[+v.slice(1)] : v === 'tagih' ? { alamat: c.alamatTagih, attn: c.up, telp: c.telp } : { alamat: '', attn: '', telp: '' };
-          $('#spAlamat', d).value = k.alamat || ''; $('#spAttn', d).value = k.attn || ''; $('#spTelp', d).value = k.telp || '';
-        };
-        $('#spAddr', d).onchange = fill; fill();
-        $('#spAdd', d).onclick = () => {
-          const last = $('.sp-row:last-child', box);
-          box.insertAdjacentHTML('beforeend', itemRowSP(last ? { deskripsi: $('.s-desc', last).value, warna: $('.s-warna', last).value } : {}));
-          $('.sp-row:last-child .s-size', box).focus(); sum();
-        };
-        box.addEventListener('click', e => { const b = e.target.closest('[data-spdel]'); if (b && $$('.sp-row', box).length > 1) { b.closest('.sp-row').remove(); sum(); } });
-        box.addEventListener('input', sum); sum();
-      },
-      collect: d => {
-        const items = $$('.sp-row', d).map((r, i) => {
-          const it = { deskripsi: $('.s-desc', r).value.trim(), idWarna: idOf('warna', $('.s-warna', r).value), idUkuran: idOf('ukuran', $('.s-size', r).value),
-                       qty: parseInt($('.s-qty', r).value, 10) || 0 };
-          if (!it.deskripsi || !it.idWarna || !it.idUkuran || it.qty < 1) throw new Error(`Lengkapi barang baris ke-${i + 1} (deskripsi, warna, ukuran, jumlah).`);
-          return it;
-        });
-        const v = id => $('#' + id, d).value.trim();
-        if (v('spButuh') && !validDMY(v('spButuh'))) throw new Error('Tanggal dibutuhkan tidak valid. Format: DD/MM/YYYY.');
-        if (!v('spNama') || !v('spAlamat')) throw new Error('Nama penerima dan alamat kirim wajib diisi.');
-        return { items, refPelanggan: v('spRef'), tglButuh: v('spButuh'), penerima: v('spNama'), alamat: v('spAlamat'), attn: v('spAttn'), telp: v('spTelp'), catatan: v('spCat') };
-      },
-      action: data => api('saveSP', data)
-    });
-    if (!res) return;
-    toast(res.message, 'ok');
-    loadMine();
-  }
-  async function cancelMine(no) {
-    const res = await modal({
-      title: `Batalkan ${no}?`, text: 'Pesanan yang belum diproses bisa dibatalkan.', icon: 'fa-xmark', tone: 'bad', danger: true, confirmText: 'Batalkan pesanan',
-      html: '<label class="f"><span>Alasan (opsional)</span><input class="input" id="cAl"></label>',
-      collect: d => $('#cAl', d).value.trim(),
-      action: a => api('cancelSP', no, a)
-    });
-    if (res) { toast(res.message, 'ok'); loadMine(); }
-  }
-
-  /* =====================================================================
-     SURAT PESANAN (staf)
-     ===================================================================== */
-  async function loadAll(btn) {
-    if (!ui.all) $('#spList').innerHTML = '<div class="skel"></div><div class="skel"></div>';
-    const list = await run(btn, () => api('listSP', ui.query, ui.status));
-    if (list) { ui.all = list; renderAll(); }
-  }
-  function renderAll() {
-    const chips = [['Diajukan', 'Perlu diproses'], ['', 'Semua'], ['Disetujui', 'Disetujui'], ['Ditolak', 'Ditolak'], ['Dibatalkan', 'Dibatalkan']];
-    $('#spChips').innerHTML = chips.map(c => `<button type="button" class="chip ${ui.status === c[0] ? 'on' : ''}" data-spst="${c[0]}">${c[1]}</button>`).join('');
-    const list = ui.all || [];
-    if (!list.length) {
-      $('#spList').innerHTML = `<div class="empty"><i class="fa-solid fa-inbox"></i><b>${ui.status === 'Diajukan' ? 'Tidak ada pesanan baru' : 'Tidak ada Surat Pesanan'}</b>Pesanan dari portal pelanggan akan muncul di sini.</div>`;
-      return;
-    }
-    const kelola = can('sp.kelola');
-    $('#spList').innerHTML = list.map(s => `
-      <div class="li" data-sp="${esc(s.no)}">
-        <div class="t"><b class="mono">${esc(s.no)}</b>
-          <small>${esc(dmy(s.tanggal))} · ${esc(s.pelanggan)} · ${fmt(totalQty(s))} pcs${s.refPelanggan ? ' · Ref ' + esc(s.refPelanggan) : ''}${s.tglButuh ? ' · butuh ' + esc(dmy(s.tglButuh)) : ''}${s.noPO ? ' · PO ' + esc(s.noPO) : ''}</small>
-          <small style="display:block">${esc(itemsLine(s))}</small></div>
-        ${stTag(s)}
-        <div class="acts">
-          <button class="btn sm" data-spact="print" title="Cetak"><i class="fa-solid fa-print"></i></button>
-          ${kelola && s.status === 'Diajukan' ? '<button class="btn sm t-ok" data-spact="ok"><i class="fa-solid fa-check"></i> Setujui</button><button class="btn sm icon t-bad" data-spact="no" aria-label="Tolak"><i class="fa-solid fa-xmark"></i></button>' : ''}
-        </div>
-      </div>`).join('');
-  }
-  async function approve(no) {
-    const s = (ui.all || []).find(x => x.no === no);
-    const res = await modal({
-      title: `Setujui ${no}`, text: `${s.pelanggan} — menjadi PO internal`, icon: 'fa-check', tone: 'ok', wide: true, confirmText: 'Setujui & buat PO',
-      html: `
-        <div class="f2">
-          <label class="f"><span>Nomor PO</span><input class="input mono" id="aPO" value="${esc(no)}"></label>
-          <label class="f"><span>MOP *</span><input class="input" id="aMOP" placeholder="MCTG/26/13048"></label>
-          <div class="f"><span>Tanggal produksi *</span>${dateField('aProd', todayDMY())}</div>
-          <div class="f"><span>Tanggal PO</span><input class="input" value="${esc(dmy(s.tanggal))}" readonly></div>
-        </div>
-        <div class="sub-h">Harga & satuan per barang</div>
-        <div class="list" style="padding:0">${s.items.map((i, k) => `
-          <div class="li" style="display:grid;grid-template-columns:minmax(0,1fr) 120px 140px;gap:8px">
-            <div class="t"><b>${esc(i.deskripsi)}</b><small>${esc(i.warna)} · ${esc(i.ukuran)} · ${fmt(i.qty)} pcs</small></div>
-            <select class="input a-unit" data-k="${k}" aria-label="Satuan">${unitOptions('UM.0021')}</select>
-            <div class="rp"><input class="input num a-price" data-k="${k}" inputmode="decimal" placeholder="Harga" aria-label="Harga satuan"></div>
-          </div>`).join('')}</div>
-        <p class="hint">Nomor PO bawaan = nomor Surat Pesanan (tampil di invoice dan XML Coretax sebagai nomor PO).</p>`,
-      collect: d => {
-        const mop = $('#aMOP', d).value.trim(), prod = $('#aProd', d).value;
-        if (!mop) throw new Error('MOP wajib diisi.');
-        if (!validDMY(prod)) throw new Error('Tanggal produksi tidak valid.');
-        const items = $$('.a-price', d).map((el, k) => {
-          const h = parsePrice(el.value);
-          if (!Number.isFinite(h) || h <= 0) { el.classList.add('invalid'); throw new Error(`Isi harga barang baris ke-${k + 1}.`); }
-          return { harga: h, satuan: $(`.a-unit[data-k="${k}"]`, d).value };
-        });
-        return { noSP: no, noPO: $('#aPO', d).value.trim(), mop, tglProduksi: prod, items };
-      },
-      action: data => api('approveSP', data)
-    });
-    if (!res) return;
-    toast(res.message, 'ok');
-    if (res.activePO) { state.activePO = res.activePO; if (typeof renderPOSelect === 'function') renderPOSelect(); }
-    loadAll();
-  }
-  async function reject(no) {
-    const res = await modal({
-      title: `Tolak ${no}?`, text: 'Alasan penolakan akan dilihat pelanggan di portal.', icon: 'fa-xmark', tone: 'bad', danger: true, confirmText: 'Tolak pesanan',
-      html: '<label class="f"><span>Alasan *</span><input class="input" id="rAl"></label>',
-      collect: d => { const v = $('#rAl', d).value.trim(); if (!v) throw new Error('Isi alasan penolakan.'); return v; },
-      action: a => api('rejectSP', no, a)
-    });
-    if (res) { toast(res.message, 'ok'); loadAll(); }
-  }
-
-  /* =====================================================================
-     CETAK SURAT PESANAN
-     ===================================================================== */
-  function spPage(r) {
-    const s = r.sp, total = totalQty(s);
-    return `<div class="doc">${COA_DOC.header(r)}
-      ${s.status === 'Dibatalkan' || s.status === 'Ditolak' ? `<div class="void">${s.status.toUpperCase()}</div>` : ''}
-      <h1>SURAT PESANAN</h1><div class="sub">Sales Order - Pesanan Pelanggan</div>
-      <div class="info">
-        <div><b class="l">No. Surat Pesanan</b><span class="v">${esc(s.no)}</span></div>
-        <div><b class="l">Tanggal</b><span class="v">${esc(dmy(s.tanggal))}</span></div>
-        <div><b class="l">Pemesan:</b><span class="v">${esc(s.pelanggan)}</span>${s.refPelanggan ? `<br>Ref. pemesan: ${esc(s.refPelanggan)}` : ''}</div>
-        <div><b class="l">Status:</b><span class="v">${esc(s.status)}</span>${s.noPO ? `<br><b class="l">Nomor PO:</b><span class="v">${esc(s.noPO)}</span>` : ''}</div>
-        <div><b class="l">Dikirim ke:</b><span class="v">${esc(s.penerima)}</span><br>${esc(s.alamat).replace(/\n/g, '<br>')}${s.attn ? ` Attn. ${esc(s.attn)}` : ''}${s.telp ? ` - ${esc(s.telp)}` : ''}</div>
-        <div><b class="l">Tanggal dibutuhkan:</b><span class="v">${esc(s.tglButuh ? dmy(s.tglButuh) : '-')}</span></div>
-      </div>
-      <table><thead><tr><th class="c" style="width:9mm">No</th><th>Deskripsi Produk</th><th style="width:32mm">Warna</th><th style="width:22mm">Ukuran</th><th class="c" style="width:22mm">Jumlah</th></tr></thead><tbody>
-        ${s.items.map((i, k) => `<tr><td class="c">${k + 1}</td><td>${esc(i.deskripsi)}</td><td>${esc(i.warna)}</td><td>${esc(i.ukuran)}</td><td class="c">${fmt(i.qty)}</td></tr>`).join('')}
-        <tr class="tot"><td colspan="4" class="c">Total Jumlah</td><td class="c">${fmt(total)}</td></tr></tbody></table>
-      ${s.catatan ? `<div class="ket-h">CATATAN</div><div class="ket">${esc(s.catatan).replace(/\n/g, '<br>')}</div>` : ''}
-      ${s.status === 'Ditolak' && s.alasan ? `<div class="ket-h">ALASAN PENOLAKAN</div><div class="ket">${esc(s.alasan)}</div>` : ''}
-      <div class="foot"><p>Surat Pesanan ini dibuat melalui portal pelanggan oleh ${esc(s.dibuatOleh)} pada ${esc(s.dibuatAt)} dan berlaku sebagai dasar pesanan.</p>
-        ${s.diprosesOleh ? `<p>${esc(s.status)} oleh ${esc(s.diprosesOleh)} pada ${esc(s.diprosesAt)}.</p>` : ''}</div>
-    </div>`;
-  }
-  async function printSP(no) {
-    let w = null;
-    try { w = window.open('', '_blank'); } catch (e) { w = null; }
-    if (w) w.document.write('<p style="font:16px Arial;padding:24px">Menyiapkan dokumen…</p>');
-    try {
-      const r = await api('getSP', no);
-      COA_PRINT.open('Surat Pesanan ' + no, [spPage(r)], COA_DOC.DOC_CSS, { win: w });
-    } catch (e) { if (w) w.close(); if (e.code !== 'AUTH') toast(e.message, 'bad'); }
   }
 
   /* =====================================================================
@@ -251,53 +255,51 @@
   const PAGES_HTML = `
     <section id="page-pesanan" class="page" hidden>
       <div class="card" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:space-between">
-        <div><h2 id="myWho"></h2><p class="muted" style="font-size:13.5px">Buat Surat Pesanan dan pantau produksi, pengiriman, serta tagihannya di sini.</p></div>
-        <div class="row"><button class="btn icon" id="btnReloadMy" title="Muat ulang" aria-label="Muat ulang"><i class="fa-solid fa-rotate"></i></button>
-          <button class="btn primary" id="btnNewSP"><i class="fa-solid fa-plus"></i> Buat Surat Pesanan</button></div>
+        <div><h2 id="myWho"></h2><p class="muted" style="font-size:13.5px">Penawaran harga dari kami, status persetujuan, produksi, pengiriman, dan tagihan.</p></div>
+        <button class="btn icon" id="btnReloadMy" title="Muat ulang" aria-label="Muat ulang"><i class="fa-solid fa-rotate"></i></button>
       </div>
       <div class="grid-cards" id="myList"></div>
     </section>
-    <section id="page-sp" class="page" hidden>
+    <section id="page-pnw" class="page" hidden>
       <div class="page-bar">
-        <div class="search" style="max-width:360px"><i class="fa-solid fa-magnifying-glass"></i><input class="input" id="spSearch" type="search" placeholder="Cari nomor, pelanggan, referensi, PO…"></div>
-        <button class="btn icon" id="btnReloadSP" title="Muat ulang" aria-label="Muat ulang"><i class="fa-solid fa-rotate"></i></button>
+        <div class="search" style="max-width:360px"><i class="fa-solid fa-magnifying-glass"></i><input class="input" id="pnwSearch" type="search" placeholder="Cari nomor, pelanggan, perihal, PO…"></div>
+        <div class="row"><button class="btn icon" id="btnReloadPNW" title="Muat ulang" aria-label="Muat ulang"><i class="fa-solid fa-rotate"></i></button>
+          <button class="btn primary" id="btnNewPNW"><i class="fa-solid fa-plus"></i> Buat penawaran</button></div>
       </div>
-      <div class="chips" id="spChips"></div>
-      <div class="card list" id="spList"></div>
-      <p class="hint">Pelanggan memesan lewat <b>link pesanan</b> (menu Pelanggan → ikon <i class="fa-solid fa-link"></i>, tanpa akun) atau akun pelanggan (menu User, role "Pelanggan"). Setelah disetujui, Surat Pesanan menjadi PO dan bisa langsung di-scan.</p>
+      <div class="chips" id="pnwChips"></div>
+      <div class="grid-cards" id="pnwList"></div>
+      <p class="hint"><b>Alur:</b> buat penawaran → cetak / simpan PDF dan kirim ke klien → setelah klien setuju tekan <b>Disetujui klien</b> → otomatis menjadi PO dan bisa langsung di-scan.
+        Klien juga bisa melihat penawarannya lewat link pelanggan (menu Pelanggan → ikon <i class="fa-solid fa-link"></i>).</p>
     </section>`;
 
   function bind() {
     $('.pages').insertAdjacentHTML('beforeend', PAGES_HTML);
-    $('#btnNewSP').onclick = newSP;
+    $('#btnNewPNW').onclick = () => editPNW(null);
+    $('#btnReloadPNW').onclick = e => loadList(e.currentTarget);
+    $('#pnwSearch').oninput = e => { clearTimeout(ui.timer); ui.timer = setTimeout(() => { ui.query = e.target.value.trim(); loadList(); }, 350); };
+    $('#pnwChips').onclick = e => { const b = e.target.closest('[data-pst]'); if (b) { ui.status = b.dataset.pst; loadList(); } };
+    $('#pnwList').onclick = e => {
+      const b = e.target.closest('[data-pact]'); if (!b) return;
+      const no = b.closest('[data-pnw]').dataset.pnw;
+      ({ print: printPNW, edit: editPNW, ok: approve, tolak: n => setStatus(n, 'Ditolak'), batal: n => setStatus(n, 'Batal'), buka: n => setStatus(n, 'Menunggu') })[b.dataset.pact](no);
+    };
     $('#btnReloadMy').onclick = e => loadMine(e.currentTarget);
     $('#myList').onclick = e => {
-      const p = e.target.closest('[data-myp]');
-      if (p) {
-        const [k, no] = [p.dataset.myp.slice(0, p.dataset.myp.indexOf(':')), p.dataset.myp.slice(p.dataset.myp.indexOf(':') + 1)];
-        if (k === 'sp') return printSP(no);
-        if (k === 'inv') return COA_INV.print(no);
-        return COA_DOC.printDN(no, k);
-      }
-      if (e.target.closest('[data-mycancel]')) cancelMine(e.target.closest('[data-sp]').dataset.sp);
-    };
-    $('#btnReloadSP').onclick = e => loadAll(e.currentTarget);
-    $('#spSearch').oninput = e => { clearTimeout(ui.timer); ui.timer = setTimeout(() => { ui.query = e.target.value.trim(); loadAll(); }, 350); };
-    $('#spChips').onclick = e => { const b = e.target.closest('[data-spst]'); if (b) { ui.status = b.dataset.spst; loadAll(); } };
-    $('#spList').onclick = e => {
-      const b = e.target.closest('[data-spact]'); if (!b) return;
-      const no = b.closest('[data-sp]').dataset.sp;
-      ({ print: printSP, ok: approve, no: reject })[b.dataset.spact](no);
+      const p = e.target.closest('[data-myp]'); if (!p) return;
+      const i = p.dataset.myp.indexOf(':'), k = p.dataset.myp.slice(0, i), no = p.dataset.myp.slice(i + 1);
+      if (k === 'pnw') return printPNW(no);
+      if (k === 'inv') return COA_INV.print(no);
+      return COA_DOC.printDN(no, k);
     };
   }
 
   (window.COA_MODULES = window.COA_MODULES || []).push({
     bind,
     pages: [
-      { id: 'pesanan', group: 'Portal', customer: true, perm: 'sp.pesan', label: 'Pesanan Saya', icon: 'fa-cart-shopping', title: 'Pesanan Saya',
-        sub: 'Surat Pesanan, progres produksi, pengiriman, dan tagihan.', onShow: () => loadMine() },
-      { id: 'sp', group: 'PO', order: 2, perm: 'sp.kelola', label: 'Surat Pesanan', icon: 'fa-inbox', title: 'Surat Pesanan Pelanggan',
-        sub: 'Pesanan dari portal pelanggan: setujui menjadi PO atau tolak.', onShow: () => loadAll() }
+      { id: 'pesanan', group: 'Portal', customer: true, perm: 'sp.pesan', label: 'Penawaran Saya', icon: 'fa-file-signature', title: 'Penawaran & Pesanan Saya',
+        sub: 'Penawaran dari kami, progres produksi, pengiriman, dan tagihan.', onShow: () => loadMine() },
+      { id: 'pnw', group: 'Pesanan', order: 1, perm: 'pnw.kelola', label: 'Penawaran', icon: 'fa-file-signature', title: 'Surat Penawaran',
+        sub: 'Untuk klien tanpa PO: kirim penawaran, setelah disetujui klien otomatis jadi PO.', onShow: () => loadList() }
     ]
   });
 })();

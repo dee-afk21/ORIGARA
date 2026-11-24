@@ -63,7 +63,7 @@
         <div class="rec-h">
           <div class="t"><b>${esc(c.nama)}</b><small class="mono">${esc(c.id)}</small></div>
           <div class="acts">
-            <button class="btn sm icon ${c.linkPesan ? 't-ok' : ''}" data-cact="link" title="Link pesanan (tanpa akun)" aria-label="Link pesanan"><i class="fa-solid fa-link"></i></button>
+            <button class="btn sm icon ${c.linkPesan ? 't-ok' : ''}" data-cact="link" title="Link penawaran pelanggan (tanpa akun)" aria-label="Link penawaran"><i class="fa-solid fa-link"></i></button>
             <button class="btn sm icon" data-cact="edit" aria-label="Edit pelanggan"><i class="fa-solid fa-pen"></i></button>
             ${can('pelanggan.hapus') ? `<button class="btn sm icon t-bad" data-cact="del" aria-label="Hapus pelanggan" ${c.jumlahPO ? 'disabled title="Sudah dipakai di PO"' : ''}><i class="fa-solid fa-trash"></i></button>` : ''}
           </div>
@@ -73,7 +73,7 @@
           <span class="tag">${fmt(c.jumlahPO)} PO</span>
           <span class="tag">${fmt(c.kirim.length)} alamat kirim</span>
           ${c.aktif ? '' : '<span class="tag warn">Nonaktif</span>'}
-          ${c.linkPesan ? '<span class="tag ok"><i class="fa-solid fa-link"></i> Link pesanan aktif</span>' : ''}
+          ${c.linkPesan ? '<span class="tag ok"><i class="fa-solid fa-link"></i> Link penawaran aktif</span>' : ''}
         </div>
         ${c.alamatTagih ? `<p><b>Tagihan:</b> ${esc(c.alamatTagih)}${c.up ? `\nUp. ${esc(c.up)}` : ''}</p>` : '<p class="muted">Alamat penagihan belum diisi.</p>'}
       </div>`).join('');
@@ -90,22 +90,22 @@
       c.linkPesan = r.link; toast(r.message, 'ok'); renderCustomers(); return true;
     };
     const body = () => c.linkPesan ? `
-        <label class="f"><span>Link pesanan ${esc(c.nama)}</span>
+        <label class="f"><span>Link penawaran ${esc(c.nama)}</span>
           <div class="with-btn"><input class="input mono" id="lkUrl" value="${esc(linkURL(c.linkPesan))}" readonly><button type="button" class="btn primary" id="lkCopy"><i class="fa-solid fa-copy"></i> Salin</button></div></label>
         <div class="row" style="flex-wrap:wrap">
-          <a class="btn" id="lkWa" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent('Link pemesanan ' + c.nama + ': ' + linkURL(c.linkPesan))}"><i class="fa-brands fa-whatsapp"></i> Kirim lewat WhatsApp</a>
+          <a class="btn" id="lkWa" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent('Link penawaran ' + c.nama + ' (lihat & unduh Surat Penawaran): ' + linkURL(c.linkPesan))}"><i class="fa-brands fa-whatsapp"></i> Kirim lewat WhatsApp</a>
           <a class="btn" target="_blank" rel="noopener" href="${esc(linkURL(c.linkPesan))}"><i class="fa-solid fa-arrow-up-right-from-square"></i> Buka</a>
         </div>
-        <p class="hint">Siapa pun yang memegang link ini bisa memesan atas nama ${esc(c.nama)} dan melihat status pesanannya (tanpa Surat Jalan &amp; invoice). Bagikan hanya ke orang yang berwenang.</p>
+        <p class="hint">Dengan link ini ${esc(c.nama)} bisa melihat &amp; mengunduh Surat Penawaran dari kita dan memantau status produksinya (tanpa Surat Jalan &amp; invoice, tidak bisa memesan sendiri). Bagikan hanya ke orang yang berwenang.</p>
         <div class="row" style="flex-wrap:wrap">
           <button type="button" class="btn sm" id="lkNew"><i class="fa-solid fa-rotate"></i> Ganti link</button>
           <button type="button" class="btn sm t-bad" id="lkOff"><i class="fa-solid fa-link-slash"></i> Matikan link</button>
         </div>
         <p class="hint">"Ganti link" membuat link lama langsung tidak berlaku — pakai bila link tersebar ke orang yang tidak berhak.</p>`
-      : `<p>Pelanggan ini belum punya link pesanan. Dengan link, pelanggan bisa membuat Surat Pesanan dan memantau statusnya <b>tanpa username &amp; password</b>.</p>
-         ${c.aktif ? '<button type="button" class="btn primary" id="lkMake"><i class="fa-solid fa-link"></i> Buat link pesanan</button>' : '<div class="note">Pelanggan nonaktif. Aktifkan dulu lewat Edit.</div>'}`;
+      : `<p>Pelanggan ini belum punya link. Dengan link, pelanggan bisa melihat &amp; mengunduh Surat Penawaran dari kita dan memantau status pesanannya <b>tanpa username &amp; password</b>.</p>
+         ${c.aktif ? '<button type="button" class="btn primary" id="lkMake"><i class="fa-solid fa-link"></i> Buat link penawaran</button>' : '<div class="note">Pelanggan nonaktif. Aktifkan dulu lewat Edit.</div>'}`;
     await modal({
-      title: 'Link pesanan', text: c.nama, icon: 'fa-link', noConfirm: true, cancelText: 'Tutup', wide: true,
+      title: 'Link penawaran pelanggan', text: c.nama, icon: 'fa-link', noConfirm: true, cancelText: 'Tutup', wide: true,
       html: '<div id="lkBody" style="display:grid;gap:14px"></div>',
       onOpen: d => {
         const draw = () => {
@@ -113,7 +113,7 @@
           const on = (sel, fn) => { const el = $(sel, d); if (el) el.onclick = fn; };
           on('#lkMake', async e => { if (await setLink('buat', e.currentTarget)) draw(); });
           on('#lkNew', async e => { if (confirm('Ganti link? Link lama langsung tidak berlaku.') && await setLink('buat', e.currentTarget)) draw(); });
-          on('#lkOff', async e => { if (confirm('Matikan link pesanan pelanggan ini?') && await setLink('hapus', e.currentTarget)) draw(); });
+          on('#lkOff', async e => { if (confirm('Matikan link penawaran pelanggan ini?') && await setLink('hapus', e.currentTarget)) draw(); });
           on('#lkCopy', async e => {
             const inp = $('#lkUrl', d); inp.select();
             try { await navigator.clipboard.writeText(inp.value); } catch (err) { document.execCommand('copy'); }

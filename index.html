@@ -603,7 +603,7 @@
       .seg { display: flex; }
       .seg button { flex: 1; padding: 0 8px; }
 
-      dialog.modal, dialog.modal.wide { width: 100vw; max-width: 100vw; margin: auto 0 0; max-height: 92dvh; }
+      dialog.modal, dialog.modal.wide, dialog.modal.xwide { width: 100vw; max-width: 100vw; margin: auto 0 0; max-height: 92dvh; }
       .modal-card { border-radius: 24px 24px 0 0; max-height: 92dvh; animation: sheet .35s var(--ease); padding-bottom: env(safe-area-inset-bottom); }
       @keyframes sheet { from { transform: translateY(100%); } }
       .modal-card > footer .btn { flex: 1; height: 50px; }
@@ -677,6 +677,14 @@
     /* ============ v0.5.0 — PERHALUSAN TAMPILAN ============ */
     html { scroll-behavior: smooth; scrollbar-gutter: stable; }
     a.btn { text-decoration: none; color: inherit; }
+    /* v0.7.0: baris barang Surat Penawaran */
+    .pnw-row, .pnw-head { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1.1fr) minmax(0, .8fr) 76px 110px 130px 42px; gap: 6px; }
+    .pnw-head { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+    dialog.modal.xwide { width: min(940px, calc(100vw - 32px)); }
+    @media (max-width: 980px) { .pnw-head { display: none; }
+      .pnw-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }
+      .pnw-row .s-desc { grid-column: 1 / -1; } .pnw-row .rp { grid-column: span 2; } .pnw-row > .btn { justify-self: end; } }
+    .dn-edited { font-size: 11.5px; color: var(--ink-3); }
     .card { transition: box-shadow .25s var(--ease), border-color .25s; }
     .card:has(.input:focus) { border-color: color-mix(in srgb, var(--brand) 35%, var(--line)); }
     .card > h3:first-child, .card > .sub-h:first-child { margin-bottom: 4px; }
@@ -964,6 +972,7 @@
 <script src="js/sertifikat.js"></script>
 <script src="js/dokumen.js"></script>
 <script src="js/invoice.js"></script>
+<script src="js/penawaran-cetak.js"></script>
 <script src="js/pesanan.js"></script>
 <script src="js/laporan.js"></script>
 <script src="js/koreksi.js"></script>
@@ -971,7 +980,7 @@
 /* KONFIGURASI server ada di js/config.js (dipakai juga oleh verifikasi.html). */
 const CONFIG = window.COA_CONFIG || { SUPABASE_URL: '', SUPABASE_KEY: '', API_URL: '', SCAN_QUEUE: 3 };
 // Naikkan setiap kali file ini diubah; tampil di halaman login dan dialog Keluar.
-const APP_VERSION = '0.6.0';
+const APP_VERSION = '0.7.0';
 const LIB = {
   qr: 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js',
   xlsx: 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'
@@ -1086,7 +1095,7 @@ function toast(msg, type = 'info') {
 function modal(opts) {
   return new Promise(resolve => {
     const d = $('#modal');
-    d.className = 'modal' + (opts.wide ? ' wide' : '');
+    d.className = 'modal' + (opts.xwide ? ' xwide' : opts.wide ? ' wide' : '');
     d.innerHTML = `
       <form class="modal-card" novalidate tabindex="-1">
         <header>
@@ -1241,7 +1250,7 @@ const PAGE_HOOKS = {};   // id halaman -> fungsi yang dijalankan saat halaman di
 // [grup, urutan]. Halaman yang tidak tercantum memakai grup bawaan dari modulnya.
 const MENU_LAYOUT = {
   scan: ['Produksi', 1], check: ['Produksi', 2], koreksi: ['Produksi', 3],
-  sp: ['Pesanan', 1], form: ['Pesanan', 2], po: ['Pesanan', 3],
+  pnw: ['Pesanan', 1], form: ['Pesanan', 2], po: ['Pesanan', 3],
   dn: ['Kirim & Tagih', 1], inv: ['Kirim & Tagih', 2], laporan: ['Kirim & Tagih', 3],
   pelanggan: ['Master Data', 1], qr: ['Master Data', 2], master: ['Master Data', 3],
   users: ['Sistem', 1], roles: ['Sistem', 2], settings: ['Sistem', 3], backup: ['Sistem', 4]
@@ -1250,7 +1259,7 @@ const GROUP_ORDER = ['Portal', 'Produksi', 'Pesanan', 'Kirim & Tagih', 'Master D
 const GROUP_ICON = { Portal: 'fa-store', Produksi: 'fa-industry', Pesanan: 'fa-clipboard-list', 'Kirim & Tagih': 'fa-truck-fast', 'Master Data': 'fa-database', Sistem: 'fa-gear' };
 PAGES.forEach(p => { const m = MENU_LAYOUT[p.id]; if (m) { p.group = m[0]; p.order = m[1]; } if (!GROUP_ORDER.includes(p.group)) GROUP_ORDER.push(p.group); });
 // Tombol bar bawah HP: dipilih dari menu yang paling sering dipakai, sesuai hak akses.
-const TAB_PRIORITY = ['pesanan', 'scan', 'po', 'dn', 'inv', 'check', 'sp', 'form', 'laporan'];
+const TAB_PRIORITY = ['pesanan', 'scan', 'po', 'dn', 'inv', 'check', 'pnw', 'form', 'laporan'];
 PAGES.sort((a, b) => GROUP_ORDER.indexOf(a.group) - GROUP_ORDER.indexOf(b.group) || (a.order || 0) - (b.order || 0));
 /** Hak akses user yang sedang login. Admin selalu punya semuanya. */
 const can = perm => !!state.user && (state.user.admin || (state.user.perms || []).includes(perm));

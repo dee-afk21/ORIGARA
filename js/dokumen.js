@@ -35,9 +35,11 @@
     $('#dnList').innerHTML = list.map(d => `
       <div class="li" data-dn="${esc(d.noDN)}">
         <div class="t"><b class="mono">${esc(d.noDN)}</b>
-          <small>${esc(dmy(d.tanggal))} · PO ${esc(d.noPO)} · ${esc(d.penerima || custName(d.idPelanggan))} · ${fmt(d.qty)} pcs</small></div>
-        ${d.status === 'Batal' ? '<span class="tag warn">Dibatalkan</span>' : '<span class="tag ok">Terbit</span>'}
+          <small>${esc(dmy(d.tanggal))} · PO ${esc(d.noPO)} · ${esc(d.penerima || custName(d.idPelanggan))} · ${fmt(d.qty)} pcs</small>
+          ${d.diubahOleh ? `<small class="dn-edited" style="display:block"><i class="fa-solid fa-pen"></i> Diubah ${esc(d.diubahOleh)} · ${esc(fmtStamp(d.diubahAt))}</small>` : ''}</div>
+        ${d.status === 'Batal' ? '<span class="tag warn">Dibatalkan</span>' : d.ditagih ? '<span class="tag ok"><i class="fa-solid fa-file-invoice-dollar"></i> Ditagih</span>' : '<span class="tag ok">Terbit</span>'}
         <div class="acts">
+          ${can('dn.buat') && d.status !== 'Batal' && !d.ditagih ? '<button class="btn sm" data-dact="edit" title="Edit Surat Jalan"><i class="fa-solid fa-pen"></i> Edit</button>' : ''}
           <button class="btn sm" data-dact="dn" title="Cetak Surat Jalan"><i class="fa-solid fa-print"></i> SJ</button>
           <button class="btn sm" data-dact="pl" title="Cetak Packing List"><i class="fa-solid fa-list-ol"></i> PL</button>
           ${can('dn.batal') && d.status !== 'Batal' ? '<button class="btn sm icon t-bad" data-dact="batal" aria-label="Batalkan Surat Jalan"><i class="fa-solid fa-ban"></i></button>' : ''}
@@ -136,6 +138,78 @@
              <button type="button" class="btn block" data-p="pl"><i class="fa-solid fa-list-ol"></i> Cetak Packing List</button></div>`,
       onOpen: (d, finish) => $$('[data-p]', d).forEach(b => b.onclick = () => { printDoc(res.noDN, b.dataset.p); finish(null); })
     });
+  }
+
+  /* =====================================================================
+     EDIT SURAT JALAN (v0.7.0) — selama belum ditagih invoice. Nomor tetap.
+     ===================================================================== */
+  async function editDN(no) {
+    const prep = await run(null, () => api('dnEditPrepare', no));
+    if (!prep) return;
+    const c = prep.pelanggan;
+    const addrOptions = () => {
+      const o = ['<option value="">— tetap seperti sekarang —</option>'];
+      (c.kirim || []).forEach((k, i) => o.push(`<option value="k${i}">${esc(k.label || 'Alamat kirim ' + (i + 1))}</option>`));
+      if (c.alamatTagih) o.push('<option value="tagih">Alamat penagihan</option>');
+      return o.join('');
+    };
+    const res = await modal({
+      title: `Edit ${no}`, text: `PO ${prep.noPO} · ${c.nama} · Packing List ${prep.noPL} ikut berubah`, icon: 'fa-pen', wide: true, sticky: true, noEnter: true,
+      confirmText: 'Simpan perubahan',
+      html: `
+        <div class="f2">
+          <div class="f"><span>Tanggal Surat Jalan *</span>${dateField('eTgl', dmy(prep.tanggal))}</div>
+          <div class="f"><span>Nomor</span><input class="input mono" value="${esc(no)}" readonly></div>
+        </div>
+        <div class="sub-h">Jumlah barang</div>
+        <div class="list" style="padding:0">${prep.lines.map((l, i) => `
+          <div class="li" data-li="${i}">
+            <div class="t"><b>${esc(l.deskripsi)}</b><small>${esc(l.warna)} · ${esc(l.ukuran)} · sekarang ${fmt(l.diSJ)} pcs · bisa ditambah ${fmt(l.siap)}</small></div>
+            <input class="input num e-qty" type="number" inputmode="numeric" min="0" max="${l.diSJ + l.siap}" value="${l.diSJ}" style="width:90px" aria-label="Jumlah di Surat Jalan">
+          </div>`).join('')}</div>
+        <p class="hint" id="eSum"></p>
+        <div class="sub-h">Penerima</div>
+        <label class="f"><span>Ganti dengan alamat dari data pelanggan</span><select class="input" id="eAddr">${addrOptions()}</select></label>
+        <div class="f2">
+          <label class="f w2"><span>Nama penerima *</span><input class="input" id="eNama" value="${esc(prep.penerima)}"></label>
+          <label class="f w2"><span>Alamat kirim *</span><textarea class="input" id="eAlamat" rows="3">${esc(prep.alamat)}</textarea></label>
+          <label class="f"><span>Attn</span><input class="input" id="eAttn" value="${esc(prep.attn)}"></label>
+          <label class="f"><span>Telepon</span><input class="input" id="eTelp" inputmode="tel" value="${esc(prep.telp)}"></label>
+          <label class="f w2"><span>Catatan (tampil di Keterangan)</span><input class="input" id="eCat" value="${esc(prep.catatan)}"></label>
+        </div>
+        <p class="hint">Mengurangi jumlah: produk yang terakhir di-scan dilepas dan kembali siap kirim. Menambah: diambil dari produk ter-scan yang belum dikirim. Surat Jalan yang sudah ditagih invoice tidak bisa diedit.</p>`,
+      onOpen: d => {
+        const sum = () => {
+          const n = $$('.e-qty', d).reduce((a, i) => a + (parseInt(i.value, 10) || 0), 0);
+          const was = prep.lines.reduce((a, l) => a + l.diSJ, 0);
+          $('#eSum', d).textContent = `Total ${fmt(n)} pcs` + (n !== was ? ` (sebelumnya ${fmt(was)} pcs)` : '');
+        };
+        $('#eAddr', d).onchange = e => {
+          const v = e.target.value; if (!v) return;
+          const k = v[0] === 'k' ? c.kirim[+v.slice(1)] : { alamat: c.alamatTagih, attn: c.up, telp: c.telp };
+          $('#eAlamat', d).value = k.alamat || ''; $('#eAttn', d).value = k.attn || ''; $('#eTelp', d).value = k.telp || '';
+        };
+        d.addEventListener('input', ev => { if (ev.target.classList.contains('e-qty')) sum(); });
+        sum();
+      },
+      collect: d => {
+        const tgl = $('#eTgl', d).value;
+        if (!validDMY(tgl)) { $('#eTgl', d).classList.add('invalid'); throw new Error('Tanggal tidak valid. Format: DD/MM/YYYY.'); }
+        const lines = $$('.e-qty', d).map((i, n) => {
+          const q = parseInt(i.value, 10) || 0, l = prep.lines[n];
+          if (q < 0 || q > l.diSJ + l.siap) { i.classList.add('invalid'); throw new Error(`Jumlah "${l.deskripsi} ${l.ukuran}" maksimal ${l.diSJ + l.siap}.`); }
+          return { deskripsi: l.deskripsi, idWarna: l.idWarna, idUkuran: l.idUkuran, qty: q };
+        });
+        if (!lines.some(l => l.qty > 0)) throw new Error('Surat Jalan harus berisi minimal 1 barang. Bila tidak jadi dikirim, batalkan Surat Jalannya.');
+        const v = id => $('#' + id, d).value.trim();
+        if (!v('eNama') || !v('eAlamat')) throw new Error('Nama penerima dan alamat kirim wajib diisi.');
+        return { noDN: no, tanggal: tgl, penerima: v('eNama'), alamat: v('eAlamat'), attn: v('eAttn'), telp: v('eTelp'), catatan: v('eCat'), lines };
+      },
+      action: data => api('updateDN', data)
+    });
+    if (!res) return;
+    toast(res.message, 'ok');
+    loadDN();
   }
 
   async function cancelDN(no) {
@@ -262,7 +336,8 @@
           <button class="btn primary" id="btnNewDN" hidden><i class="fa-solid fa-plus"></i> Buat Surat Jalan</button></div>
       </div>
       <div class="card list" id="dnList"></div>
-      <p class="hint">Satu Surat Jalan untuk satu PO. Barang yang dikirim diambil dari hasil scan yang belum pernah dikirim. Packing List memakai nomor yang sama dan berisi rincian kode item.</p>
+      <p class="hint">Satu Surat Jalan untuk satu PO. Barang yang dikirim diambil dari hasil scan yang belum pernah dikirim. Packing List memakai nomor yang sama dan berisi rincian kode item.
+        Surat Jalan bisa <b>diedit</b> (tanggal, penerima, jumlah barang) selama belum ditagih invoice.</p>
     </section>`;
 
   function bind() {
@@ -274,6 +349,7 @@
       const b = e.target.closest('[data-dact]'); if (!b) return;
       const no = b.closest('[data-dn]').dataset.dn;
       if (b.dataset.dact === 'batal') return cancelDN(no);
+      if (b.dataset.dact === 'edit') return editDN(no);
       printDoc(no, b.dataset.dact);
     };
   }
