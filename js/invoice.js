@@ -336,8 +336,9 @@
     .inv .att ul { margin: 1.5mm 0 0; padding-left: 4mm; }
     .inv .att li { margin-bottom: 2.5mm; }
     .inv .att .bk { display: grid; grid-template-columns: 22mm 1fr; padding-left: 6mm; }
-    .inv .sign { text-align: left; font-size: 10pt; padding-left: 8mm; }
-    .inv .sign img { height: 27mm; display: block; margin: 2mm 0; max-width: 55mm; object-fit: contain; }
+    /* v0.8.5: Hormat Kami, tanda tangan & nama direktur rata kanan dengan tabel total di atasnya */
+    .inv .sign { text-align: right; font-size: 10pt; padding-right: 1.5mm; }
+    .inv .sign img { height: 27mm; display: block; margin: 2mm 0 2mm auto; max-width: 55mm; object-fit: contain; object-position: right center; }
     .inv .sign .sp { height: 27mm; }
     .inv .note { margin-top: 3mm; font-size: 8.4pt; color: #444; }
     .inv .void { position: absolute; left: 0; right: 0; top: 120mm; text-align: center; font: 900 50pt Arial; color: rgba(217,45,32,.2); transform: rotate(-22deg); }` + COA_PRINT.KOP_CSS;

@@ -3,7 +3,7 @@
    - Pustaka CDN (font, ikon, scanner kamera, XLSX) : dari cache dulu, karena URL-nya berversi.
    - Panggilan API ke Apps Script (POST) tidak pernah disentuh / di-cache.
    Naikkan angka VERSION hanya jika ingin membuang seluruh cache lama. */
-const VERSION = 'origara-v10';
+const VERSION = 'origara-v11';
 const SHELL = ['./', 'js/config.js', 'js/admin.js', 'js/sertifikat.js', 'js/dokumen.js', 'js/invoice.js', 'js/penawaran-cetak.js', 'js/pesanan.js', 'js/laporan.js', 'js/koreksi.js', 'js/ref-coretax.js',
                'verifikasi.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'img/origara.png'];
 const CDN_HOSTS = ['fonts.googleapis.com', 'fonts.gstatic.com', 'cdnjs.cloudflare.com', 'unpkg.com', 'cdn.jsdelivr.net'];
