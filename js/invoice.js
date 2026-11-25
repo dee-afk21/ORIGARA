@@ -52,7 +52,7 @@
       $('#invList').innerHTML = `<div class="empty"><i class="fa-solid fa-file-invoice-dollar"></i><b>${ui.query || ui.jenis ? 'Tidak ditemukan' : 'Belum ada dokumen'}</b>${ui.query || ui.jenis ? 'Ubah kata kunci atau filter.' : 'Buat invoice dari Surat Jalan, atau proforma / DP dari PO.'}</div>`;
       return;
     }
-    const buat = can('inv.buat'), batal = can('inv.batal');
+    const buat = can('inv.buat'), batal = can('inv.batal'), hapus = can('inv.hapus');
     $('#invList').innerHTML = list.map(v => {
       const tags = [];
       if (v.status === 'Batal') tags.push('<span class="tag warn">Dibatalkan</span>');
@@ -68,7 +68,8 @@
           ${buat && v.jenis === 'PROFORMA' && v.status === 'Terbit' ? '<button class="btn sm t-ok" data-iact="convert" title="Sudah dibayar: terbitkan invoice"><i class="fa-solid fa-file-circle-check"></i> Terbitkan</button>' : ''}
           ${v.jenis === 'PELUNASAN' && v.status !== 'Batal' ? '<button class="btn sm" data-iact="info" title="Data untuk Coretax"><i class="fa-solid fa-receipt"></i> Coretax</button>' : ''}
           ${buat && v.jenis !== 'PROFORMA' && v.status !== 'Batal' ? '<button class="btn sm" data-iact="faktur" title="Isi nomor faktur pajak"><i class="fa-solid fa-hashtag"></i></button>' : ''}
-          ${batal && v.status === 'Terbit' ? '<button class="btn sm icon t-bad" data-iact="batal" aria-label="Batalkan"><i class="fa-solid fa-ban"></i></button>' : ''}
+          ${batal && v.status === 'Terbit' ? '<button class="btn sm icon t-bad" data-iact="batal" aria-label="Batalkan" title="Batalkan"><i class="fa-solid fa-ban"></i></button>' : ''}
+          ${hapus && v.status !== 'Diproses' ? '<button class="btn sm icon t-bad" data-iact="hapus" aria-label="Hapus permanen" title="Hapus permanen (nomor dipakai lagi)"><i class="fa-solid fa-trash"></i></button>' : ''}
         </div>
       </div>`;
     }).join('');
@@ -265,6 +266,20 @@
       confirmText: 'Batalkan', html: '<label class="f"><span>Alasan pembatalan *</span><input class="input" id="bAl"></label>',
       collect: d => { const v = $('#bAl', d).value.trim(); if (!v) throw new Error('Isi alasan pembatalan.'); return v; },
       action: a => api('cancelInvoice', no, a)
+    });
+    if (res) { toast(res.message, 'ok'); loadInv(); }
+  }
+  // v0.8.3: hapus permanen — nomornya dipakai lagi oleh dokumen berikutnya.
+  async function deleteInv(no) {
+    const v = (ui.list || []).find(x => x.no === no) || {};
+    const res = await modal({
+      title: `Hapus ${no} permanen?`, icon: 'fa-trash', tone: 'bad', danger: true, confirmText: 'Hapus permanen',
+      text: 'Dokumen dihapus dari daftar dan nomornya akan dipakai lagi oleh dokumen berikutnya. Tindakan ini tidak bisa dibatalkan.',
+      html: `${v.xml ? '<div class="note"><b>Invoice ini sudah pernah diekspor ke XML Coretax.</b> Pastikan fakturnya di Coretax juga sudah dibatalkan / tidak dipakai.</div>' : ''}
+        <label class="f"><span>Alasan penghapusan *</span><input class="input" id="hAl" placeholder="mis. salah input, dibuat ulang"></label>
+        <p class="hint">Isi dokumen tetap dicatat di riwayat penghapusan (ikut di Backup).</p>`,
+      collect: d => { const a = $('#hAl', d).value.trim(); if (a.length < 3) throw new Error('Isi alasan penghapusan.'); return a; },
+      action: a => api('deleteInvoice', no, a)
     });
     if (res) { toast(res.message, 'ok'); loadInv(); }
   }
@@ -491,7 +506,7 @@
     $('#invList').onclick = e => {
       const b = e.target.closest('[data-iact]'); if (!b) return;
       const no = b.closest('[data-inv]').dataset.inv;
-      ({ print: printInv, convert, faktur: setFaktur, batal: cancelInv, info: coretaxInfo })[b.dataset.iact](no);
+      ({ print: printInv, convert, faktur: setFaktur, batal: cancelInv, hapus: deleteInv, info: coretaxInfo })[b.dataset.iact](no);
     };
   }
 

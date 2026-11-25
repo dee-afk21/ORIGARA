@@ -56,7 +56,8 @@
           ${can('dn.buat') && d.status !== 'Batal' && !d.ditagih ? '<button class="btn sm" data-dact="edit" title="Edit Surat Jalan"><i class="fa-solid fa-pen"></i> Edit</button>' : ''}
           <button class="btn sm" data-dact="dn" title="Cetak Surat Jalan"><i class="fa-solid fa-print"></i> SJ</button>
           ${d.jenis === 'TANPA_QR' ? '' : '<button class="btn sm" data-dact="pl" title="Cetak Packing List"><i class="fa-solid fa-list-ol"></i> PL</button>'}
-          ${can('dn.batal') && d.status !== 'Batal' ? '<button class="btn sm icon t-bad" data-dact="batal" aria-label="Batalkan Surat Jalan"><i class="fa-solid fa-ban"></i></button>' : ''}
+          ${can('dn.batal') && d.status !== 'Batal' ? '<button class="btn sm icon t-bad" data-dact="batal" aria-label="Batalkan Surat Jalan" title="Batalkan"><i class="fa-solid fa-ban"></i></button>' : ''}
+          ${can('dn.hapus') ? '<button class="btn sm icon t-bad" data-dact="hapus" aria-label="Hapus Surat Jalan" title="Hapus permanen (nomor dipakai lagi)"><i class="fa-solid fa-trash"></i></button>' : ''}
         </div>
       </div>`).join('');
   }
@@ -229,6 +230,19 @@
     loadDN();
   }
 
+  // v0.8.3: hapus permanen — barang kembali siap kirim dan nomornya dipakai Surat Jalan berikutnya.
+  async function deleteDN(no) {
+    const res = await modal({
+      title: `Hapus ${no} permanen?`, icon: 'fa-trash', tone: 'bad', danger: true, confirmText: 'Hapus permanen',
+      text: 'Surat Jalan (dan Packing List-nya) dihapus, barangnya kembali siap kirim, dan nomornya akan dipakai lagi oleh Surat Jalan berikutnya. Tindakan ini tidak bisa dibatalkan.',
+      html: `<label class="f"><span>Alasan penghapusan *</span><input class="input" id="hAl" placeholder="mis. salah input, dibuat ulang"></label>
+        <p class="hint">Surat Jalan yang sudah ditagih harus dihapus / dibatalkan invoice-nya dulu. Isi dokumen tetap dicatat di riwayat penghapusan (ikut di Backup).</p>`,
+      collect: d => { const a = $('#hAl', d).value.trim(); if (a.length < 3) throw new Error('Isi alasan penghapusan.'); return a; },
+      action: a => api('deleteDN', no, a)
+    });
+    if (res) { toast(res.message, 'ok'); loadDN(); }
+  }
+
   async function cancelDN(no) {
     const res = await modal({
       title: `Batalkan ${no}?`, text: 'Barangnya kembali berstatus siap kirim. Nomor Surat Jalan ini tidak akan dipakai ulang.',
@@ -390,6 +404,7 @@
       const b = e.target.closest('[data-dact]'); if (!b) return;
       const no = b.closest('[data-dn]').dataset.dn;
       if (b.dataset.dact === 'batal') return cancelDN(no);
+      if (b.dataset.dact === 'hapus') return deleteDN(no);
       if (b.dataset.dact === 'edit') return editDN(no);
       printDoc(no, b.dataset.dact);
     };

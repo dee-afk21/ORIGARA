@@ -536,9 +536,11 @@
               : `<label class="f"><span>Nomor terakhir</span><input class="input c-last num" inputmode="numeric" value="${esc(c.terakhir)}"></label>
                  <label class="f"><span>Reset nomor</span>${resetSel(c.reset)}</label>`}
             <button type="button" class="btn" data-ctrsave><i class="fa-solid fa-floppy-disk"></i> Simpan</button>
-            <div class="nxt">Nomor berikutnya: <b class="c-next">${esc(c.berikutnya)}</b></div>
+            <div class="nxt">Nomor berikutnya: <b class="c-next">${esc(c.berikutnya)}</b>${!c.ikut && (c.kosong || []).length
+              ? `<br><small class="hint"><i class="fa-solid fa-recycle"></i> Nomor kosong (dokumen dihapus) yang dipakai lebih dulu: ${c.kosong.map(esc).join(', ')}</small>` : ''}</div>
           </div>`).join('')}
-        <p class="hint" style="margin-top:12px">"Nomor terakhir" = nomor yang terakhir kali dipakai. Dokumen berikutnya memakai nomor ini + 1, jadi nomor tidak pernah terpakai dua kali.</p>
+        <p class="hint" style="margin-top:12px">"Nomor terakhir" = nomor yang terakhir kali dipakai. Dokumen berikutnya memakai nomor ini + 1.
+          Bila ada Surat Jalan / invoice yang <b>dihapus</b>, nomornya dipakai lagi lebih dulu oleh dokumen berikutnya.</p>
       </div>`;
     } else if (ui.setTab === 'pajak') {
       const R = window.CORETAX_REF;

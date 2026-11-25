@@ -99,7 +99,7 @@
      ===================================================================== */
   const TAB_NAMA = { customers: 'Pelanggan', master_data: 'Warna & Ukuran', master_po: 'PO', po_items: 'Item PO', master_qr: 'Master QR', scan_logs: 'Log Scan',
     delivery_notes: 'Surat Jalan', dn_items: 'Item Surat Jalan', invoices: 'Invoice', invoice_lines: 'Baris Invoice', sales_orders: 'Surat Pesanan',
-    sales_order_items: 'Item Surat Pesanan', scan_corrections: 'Koreksi Scan', users: 'User', roles: 'Role', settings: 'Pengaturan', counters: 'Penomoran' };
+    sales_order_items: 'Item Surat Pesanan', scan_corrections: 'Koreksi Scan', deleted_docs: 'Dokumen dihapus', dn_qty: 'Barang tanpa QR di Surat Jalan', users: 'User', roles: 'Role', settings: 'Pengaturan', counters: 'Penomoran' };
   const lastKey = 'coa_last_backup';
   async function loadBackupInfo() {
     $('#bkInfo').innerHTML = '<div class="skel"></div>';
