@@ -55,7 +55,7 @@
         <div class="acts">
           ${can('dn.buat') && d.status !== 'Batal' && !d.ditagih ? '<button class="btn sm" data-dact="edit" title="Edit Surat Jalan"><i class="fa-solid fa-pen"></i> Edit</button>' : ''}
           <button class="btn sm" data-dact="dn" title="Cetak Surat Jalan"><i class="fa-solid fa-print"></i> SJ</button>
-          <button class="btn sm" data-dact="pl" title="Cetak Packing List"><i class="fa-solid fa-list-ol"></i> PL</button>
+          ${d.jenis === 'TANPA_QR' ? '' : '<button class="btn sm" data-dact="pl" title="Cetak Packing List"><i class="fa-solid fa-list-ol"></i> PL</button>'}
           ${can('dn.batal') && d.status !== 'Batal' ? '<button class="btn sm icon t-bad" data-dact="batal" aria-label="Batalkan Surat Jalan"><i class="fa-solid fa-ban"></i></button>' : ''}
         </div>
       </div>`).join('');
@@ -153,7 +153,7 @@
     modal({
       title: 'Surat Jalan terbit', text: res.noDN, icon: 'fa-circle-check', tone: 'ok', noConfirm: true, cancelText: 'Tutup',
       html: `<div class="row"><button type="button" class="btn primary block" data-p="dn"><i class="fa-solid fa-print"></i> Cetak Surat Jalan</button>
-             <button type="button" class="btn block" data-p="pl"><i class="fa-solid fa-list-ol"></i> Cetak Packing List</button></div>`,
+             ${(pos.find(p => p.noPO === prep.noPO) || {}).jenis === 'TANPA_QR' ? '' : '<button type="button" class="btn block" data-p="pl"><i class="fa-solid fa-list-ol"></i> Cetak Packing List</button>'}</div>`,
       onOpen: (d, finish) => $$('[data-p]', d).forEach(b => b.onclick = () => { printDoc(res.noDN, b.dataset.p); finish(null); })
     });
   }
@@ -280,25 +280,32 @@
       <div><b class="l">${first[0]}</b><span class="v">${esc(first[1])}</span></div>
       <div><b class="l">Tanggal</b><span class="v">${esc(dmy(dn.tanggal))}</span></div>
       <div><b class="l">Penerima:</b><span class="v">${esc(dn.penerima)}</span><br>${esc(dn.alamat).replace(/\n/g, '<br>')}${dn.attn ? ` Attn. ${esc(dn.attn)}` : ''}${dn.telp ? ` - ${esc(dn.telp)}` : ''}</div>
-      <div><b class="l">Nomor PO:</b><span class="v">${esc(dn.noPO)}</span><br><br><b class="l">${second[0]}</b><span class="v">${esc(second[1])}</span></div>
+      <div><b class="l">Nomor PO:</b><span class="v">${esc(dn.noPO)}</span>${second ? `<br><br><b class="l">${second[0]}</b><span class="v">${esc(second[1])}</span>` : ''}</div>
     </div>`;
   }
   function summaryTable(dn) {
     const total = dn.lines.reduce((a, l) => a + Number(l.qty), 0);
     const oneUnit = totalUnit(dn.lines);          // kosong = satuan berbeda-beda (mis. Kilogram + Pcs)
-    const qtyCell = l => qtyText(l.qty) + (oneUnit ? '' : ' ' + esc(docUnit(l.satuan)));
-    return `<table><thead><tr><th class="c" style="width:9mm">No</th><th class="c" style="width:${oneUnit ? 22 : 30}mm">Jumlah</th><th style="width:26mm">Ukuran</th><th style="width:34mm">Warna</th><th>Deskripsi Produk</th></tr></thead><tbody>
-      ${dn.lines.map((l, i) => `<tr><td class="c">${i + 1}</td><td class="c">${qtyCell(l)}</td><td>${esc(l.ukuran || '-')}</td><td>${esc(l.warna || '-')}</td><td>${esc(l.deskripsi)}</td></tr>`).join('')}
-      <tr class="tot"><td colspan="3" class="c">Total Jumlah</td><td colspan="2" class="c">${oneUnit ? `${qtyText(total)} ${esc(oneUnit)}` : `${fmt(dn.lines.length)} jenis barang`}</td></tr>
+    // v0.8.1: kolom Satuan selalu ada; kolom Ukuran / Warna hanya tampil bila ada isinya (barang tanpa QR sering kosong)
+    const showU = dn.lines.some(l => l.ukuran), showW = dn.lines.some(l => l.warna);
+    const head = `<th class="c" style="width:9mm">No</th><th class="c" style="width:24mm">Jumlah</th><th style="width:22mm">Satuan</th>`
+      + (showU ? '<th style="width:24mm">Ukuran</th>' : '') + (showW ? '<th style="width:32mm">Warna</th>' : '') + '<th>Deskripsi Produk</th>';
+    const row = (l, i) => `<tr><td class="c">${i + 1}</td><td class="c">${qtyText(l.qty)}</td><td>${esc(docUnit(l.satuan))}</td>`
+      + (showU ? `<td>${esc(l.ukuran || '-')}</td>` : '') + (showW ? `<td>${esc(l.warna || '-')}</td>` : '') + `<td>${esc(l.deskripsi)}</td></tr>`;
+    const nCol = 4 + showU + showW;
+    return `<table><thead><tr>${head}</tr></thead><tbody>
+      ${dn.lines.map(row).join('')}
+      <tr class="tot"><td colspan="${nCol}" class="c">Total Jumlah: ${oneUnit ? `${qtyText(total)} ${esc(oneUnit)}` : `${fmt(dn.lines.length)} jenis barang`}</td></tr>
     </tbody></table>`;
   }
   // Packing List: barang tanpa QR tidak punya kode item, jadi dicantumkan per jumlah.
   function noQRSection(dn) {
     const rows = dn.lines.filter(l => l.pakaiQr === false);
     if (!rows.length) return '';
+    const showU = rows.some(l => l.ukuran), showW = rows.some(l => l.warna);
     return `<h2>Barang tanpa kode QR (${fmt(rows.length)} jenis)</h2>
-      <table><thead><tr><th class="c" style="width:10mm">No</th><th class="c" style="width:32mm">Jumlah</th><th style="width:22mm">Ukuran</th><th style="width:30mm">Warna</th><th>Deskripsi Produk</th></tr></thead><tbody>
-        ${rows.map((l, i) => `<tr><td class="c">${i + 1}</td><td class="c">${qtyText(l.qty)} ${esc(docUnit(l.satuan))}</td><td>${esc(l.ukuran || '-')}</td><td>${esc(l.warna || '-')}</td><td>${esc(l.deskripsi)}</td></tr>`).join('')}
+      <table><thead><tr><th class="c" style="width:10mm">No</th><th class="c" style="width:24mm">Jumlah</th><th style="width:22mm">Satuan</th>${showU ? '<th style="width:22mm">Ukuran</th>' : ''}${showW ? '<th style="width:30mm">Warna</th>' : ''}<th>Deskripsi Produk</th></tr></thead><tbody>
+        ${rows.map((l, i) => `<tr><td class="c">${i + 1}</td><td class="c">${qtyText(l.qty)}</td><td>${esc(docUnit(l.satuan))}</td>${showU ? `<td>${esc(l.ukuran || '-')}</td>` : ''}${showW ? `<td>${esc(l.warna || '-')}</td>` : ''}<td>${esc(l.deskripsi)}</td></tr>`).join('')}
       </tbody></table>`;
   }
   function footer(note) {
@@ -309,7 +316,7 @@
     return `<div class="doc">${header(r)}
       ${dn.status === 'Batal' ? '<div class="void">DIBATALKAN</div>' : ''}
       <h1>SURAT JALAN</h1><div class="sub">Delivery Note - Bukti Pengiriman</div>
-      ${infoBlock(dn, ['No. Surat Jalan', dn.noDN], ['No. Packing List:', dn.noPL])}
+      ${infoBlock(dn, ['No. Surat Jalan', dn.noDN], dn.jenis === 'TANPA_QR' ? null : ['No. Packing List:', dn.noPL])}
       ${summaryTable(dn)}
       <div class="ket-h">KETERANGAN</div>
       <div class="ket">Barang yang tercantum dalam surat jalan ini telah diperiksa dan disetujui kualitas serta kuantitasnya.${dn.catatan ? '<br>' + esc(dn.catatan) : ''}</div>
@@ -344,6 +351,11 @@
     if (w) w.document.write('<p style="font:16px Arial;padding:24px">Menyiapkan dokumen…</p>');
     try {
       const r = await api('getDN', no);
+      // v0.8.1: PO Tanpa QR tidak memakai Packing List (cukup Surat Jalan)
+      if (kind === 'pl' && r.dn.jenis === 'TANPA_QR') {
+        if (w) w.close();
+        return toast('Surat Jalan untuk PO Tanpa QR tidak memakai Packing List. Cetak Surat Jalan saja.', 'info');
+      }
       const n = Math.max(1, Math.min(3, copies || 1));
       const page = kind === 'pl' ? plPage(r) : dnPage(r);
       const title = (kind === 'pl' ? 'Packing List ' + r.dn.noPL : 'Surat Jalan ' + r.dn.noDN);
