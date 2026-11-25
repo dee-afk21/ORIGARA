@@ -158,9 +158,9 @@
     return `<article class="order" data-no="${e(s.no)}">
       <div class="order-h"><div><b class="mono">${e(s.no)}</b><small>${e(dmy(s.tanggal))}${s.perihal ? ' · ' + e(s.perihal) : ''}${s.berlaku && s.status === 'Menunggu' ? ' · berlaku s/d ' + e(dmy(s.berlaku)) : ''}</small></div>
         <span class="pill ${e(s.status)}">${e(LABEL[s.status] || s.status)}</span></div>
-      <ul class="lines">${s.items.map(i => `<li><span>${e(i.deskripsi)} · ${e(i.warna)} · ${e(i.ukuran)} · ${fmt(i.qty)} × ${rp(i.harga)}</span><b>${rp(i.jumlah)}</b></li>`).join('')}</ul>
+      <ul class="lines">${s.items.map(i => `<li><span>${[i.deskripsi, i.warna, i.ukuran].filter(Boolean).map(e).join(' · ')} · ${fmt(i.qty)} × ${rp(i.harga)}</span><b>${rp(i.jumlah)}</b></li>`).join('')}</ul>
       <div class="total"><span>Total termasuk PPN ${e(s.tarifPpn)}%</span>${rp(s.total)}</div>
-      ${s.status === 'Disetujui' ? `<div><small class="hint">No. PO ${e(s.noPO)} · produksi ${fmt(pr.selesai)} / ${fmt(pr.target)} pcs · dikirim ${fmt(pr.dikirim)} pcs</small><div class="bar"><i style="width:${pct}%"></i></div></div>` : ''}
+      ${s.status === 'Disetujui' ? `<div><small class="hint">No. PO ${e(s.noPO)} · progres ${fmt(pr.selesai)} / ${fmt(pr.target)} · dikirim ${fmt(pr.dikirim)}</small><div class="bar"><i style="width:${pct}%"></i></div></div>` : ''}
       ${s.status === 'Ditolak' && s.alasan ? `<small class="hint">Catatan: ${e(s.alasan)}</small>` : ''}
       ${s.status === 'Menunggu' ? '<small class="hint">Bila setuju, silakan konfirmasi ke kontak kami. Pesanan akan langsung kami proses.</small>' : ''}
       <div class="acts"><button type="button" class="btn pri" data-print><i class="fa-solid fa-file-pdf"></i> Lihat / unduh PDF</button></div>

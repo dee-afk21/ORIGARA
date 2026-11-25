@@ -136,7 +136,7 @@
           if (j === 'INVOICE') {
             const list = src.dn.filter(x => !x.dp);
             h = `<label class="f"><span>Surat Jalan yang ditagih *</span><select class="input" id="iDN">${list.length
-              ? '<option value="">— Pilih Surat Jalan —</option>' + list.map(x => `<option value="${esc(x.noDN)}">${esc(x.noDN)} · ${esc(dmy(x.tanggal))} · PO ${esc(x.noPO)} · ${esc(custName(x.idPelanggan))} · ${fmt(x.qty)} pcs</option>`).join('')
+              ? '<option value="">— Pilih Surat Jalan —</option>' + list.map(x => `<option value="${esc(x.noDN)}">${esc(x.noDN)} · ${esc(dmy(x.tanggal))} · PO ${esc(x.noPO)} · ${esc(custName(x.idPelanggan))} · ${qtyText(x.qty)} barang</option>`).join('')
               : '<option value="">Semua Surat Jalan sudah ditagih</option>'}</select></label>
               ${src.dn.some(x => x.dp) ? '<p class="hint">Surat Jalan dari PO yang memakai DP tidak muncul di sini; tagihannya lewat Invoice Pelunasan.</p>' : ''}`;
           } else if (j === 'PROFORMA') {

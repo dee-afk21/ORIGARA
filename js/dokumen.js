@@ -16,6 +16,20 @@
   const docUnit = code => code === 'UM.0021' ? 'Pcs' : (typeof unitName === 'function' ? unitName(code) : code);
   const totalUnit = lines => { const u = [...new Set(lines.map(l => l.satuan))]; return u.length === 1 ? docUnit(u[0]) : ''; };
   const custName = id => (typeof nameOf === 'function' ? nameOf('pelanggan', id) : id);
+  /* v0.8.0: barang tanpa QR — jumlah boleh desimal, warna/ukuran boleh kosong. */
+  const spec = l => [l.warna, l.ukuran].filter(Boolean).map(esc).join(' · ');
+  const noQRTag = '<span class="jenis-tag"><i class="fa-solid fa-boxes-stacked"></i>Tanpa QR</span>';
+  /** Jumlah dari input: barang ber-QR harus bulat. Mengembalikan angka atau melempar pesan. */
+  function readQty(input, l, max) {
+    const q = parseQty(input.value);
+    const bad = msg => { input.classList.add('invalid'); throw new Error(msg); };
+    if (!Number.isFinite(q) || q < 0) bad(`Jumlah "${l.deskripsi}" tidak valid${l.pakaiQr === false ? ' (maks. 2 angka di belakang koma)' : ''}.`);
+    if (l.pakaiQr !== false && !Number.isInteger(q)) bad(`Jumlah "${l.deskripsi}" harus bilangan bulat (barang ber-QR).`);
+    if (q > max + 1e-9) bad(`Jumlah "${l.deskripsi}${l.ukuran ? ' ' + l.ukuran : ''}" maksimal ${qtyText(max)}.`);
+    return q;
+  }
+  const qtyInput = (cls, l, val, max) =>
+    `<input class="input num ${cls}" type="text" inputmode="${l.pakaiQr === false ? 'decimal' : 'numeric'}" value="${esc(String(val).replace('.', ','))}" style="width:96px" ${max > 0 ? '' : 'disabled'} aria-label="Jumlah dikirim" autocomplete="off">`;
 
   /* =====================================================================
      DAFTAR SURAT JALAN
@@ -35,7 +49,7 @@
     $('#dnList').innerHTML = list.map(d => `
       <div class="li" data-dn="${esc(d.noDN)}">
         <div class="t"><b class="mono">${esc(d.noDN)}</b>
-          <small>${esc(dmy(d.tanggal))} · PO ${esc(d.noPO)} · ${esc(d.penerima || custName(d.idPelanggan))} · ${fmt(d.qty)} pcs</small>
+          <small>${esc(dmy(d.tanggal))} · PO ${esc(d.noPO)} · ${esc(d.penerima || custName(d.idPelanggan))} · ${qtyText(d.qty)} barang</small>
           ${d.diubahOleh ? `<small class="dn-edited" style="display:block"><i class="fa-solid fa-pen"></i> Diubah ${esc(d.diubahOleh)} · ${esc(fmtStamp(d.diubahAt))}</small>` : ''}</div>
         ${d.status === 'Batal' ? '<span class="tag warn">Dibatalkan</span>' : d.ditagih ? '<span class="tag ok"><i class="fa-solid fa-file-invoice-dollar"></i> Ditagih</span>' : '<span class="tag ok">Terbit</span>'}
         <div class="acts">
@@ -53,13 +67,18 @@
   async function newDN() {
     const pos = await run($('#btnNewDN'), () => api('dnPOs'));
     if (!pos) return;
-    if (!pos.length) return toast('Belum ada barang ter-scan yang siap dikirim.', 'info');
+    if (!pos.length) return toast('Belum ada barang yang siap dikirim (barang ber-QR harus di-scan dulu).', 'info');
     let prep = null;
-    const lineRows = () => prep.lines.map((l, i) => `
+    const lineRows = () => prep.lines.map((l, i) => {
+      const unit = docUnit(l.satuan), info = [spec(l)];
+      if (l.pakaiQr === false) info.push(`sisa ${qtyText(l.siap)} ${esc(unit)} dari target ${qtyText(l.qtyTarget)}${l.dikirim ? ` (${qtyText(l.dikirim)} sudah dikirim)` : ''}`);
+      else info.push(`siap ${fmt(l.siap)} dari ${fmt(l.scanned)} ter-scan${l.dikirim ? ` (${fmt(l.dikirim)} sudah dikirim)` : ''}`);
+      return `
       <div class="li" data-li="${i}">
-        <div class="t"><b>${esc(l.deskripsi)}</b><small>${esc(l.warna)} · ${esc(l.ukuran)} · siap ${fmt(l.siap)} dari ${fmt(l.scanned)} ter-scan${l.dikirim ? ` (${fmt(l.dikirim)} sudah dikirim)` : ''}</small></div>
-        <input class="input num d-qty" type="number" inputmode="numeric" min="0" max="${l.siap}" value="${l.siap}" style="width:90px" ${l.siap ? '' : 'disabled'} aria-label="Jumlah dikirim">
-      </div>`).join('');
+        <div class="t"><b>${esc(l.deskripsi)}</b> ${l.pakaiQr === false ? noQRTag : ''}<small>${info.filter(Boolean).join(' · ')}</small></div>
+        ${qtyInput('d-qty', l, l.siap, l.siap)}
+      </div>`;
+    }).join('');
     const addrOptions = () => {
       const c = prep.pelanggan, o = [];
       (c.kirim || []).forEach((k, i) => o.push(`<option value="k${i}">${esc(k.label || 'Alamat kirim ' + (i + 1))}</option>`));
@@ -71,7 +90,7 @@
       title: 'Buat Surat Jalan', icon: 'fa-truck', wide: true, sticky: true, confirmText: 'Terbitkan Surat Jalan',
       html: `
         <label class="f"><span>PO yang dikirim *</span><select class="input" id="dPO"><option value="">— Pilih PO —</option>${pos.map(p =>
-          `<option value="${esc(p.noPO)}">${esc(p.noPO)} · ${esc(custName(p.idPelanggan))} · siap kirim ${fmt(p.siap)} pcs</option>`).join('')}</select></label>
+          `<option value="${esc(p.noPO)}">${esc(p.noPO)} · ${esc(custName(p.idPelanggan))} · siap kirim ${qtyText(p.siap)}</option>`).join('')}</select></label>
         <div id="dBody" class="hint">Pilih PO untuk melihat barang yang siap dikirim. Satu Surat Jalan untuk satu PO.</div>`,
       onOpen: d => {
         $('#dPO', d).onchange = async e => {
@@ -104,9 +123,9 @@
             if (k) { $('#dAlamat', d).value = k.alamat || ''; $('#dAttn', d).value = k.attn || ''; $('#dTelp', d).value = k.telp || ''; }
             else { $('#dAlamat', d).value = ''; $('#dAttn', d).value = ''; $('#dTelp', d).value = ''; $('#dAlamat', d).focus(); }
           };
-          const sum = () => { const n = $$('.d-qty', d).reduce((a, i) => a + (parseInt(i.value, 10) || 0), 0); $('#dSum', d).textContent = `Total dikirim: ${fmt(n)} pcs`; };
+          const sum = () => { const n = $$('.d-qty', d).reduce((a, i) => a + (parseQty(i.value) || 0), 0); $('#dSum', d).textContent = `Total dikirim: ${qtyText(n)} ${esc(totalUnit(prep.lines) || 'barang')}`; };
           $('#dAddr', d).onchange = fillAddr; fillAddr();
-          $$('[data-qall]', d).forEach(b => b.onclick = () => { $$('.d-qty', d).forEach((i, n) => { i.value = b.dataset.qall === '1' ? prep.lines[n].siap : 0; }); sum(); });
+          $$('[data-qall]', d).forEach(b => b.onclick = () => { $$('.d-qty', d).forEach((i, n) => { i.value = b.dataset.qall === '1' ? String(prep.lines[n].siap).replace('.', ',') : 0; i.classList.remove('invalid'); }); sum(); });
           d.addEventListener('input', ev => { if (ev.target.classList.contains('d-qty')) sum(); });
           sum();
         };
@@ -116,10 +135,9 @@
         const tgl = $('#dTgl', d).value;
         if (!validDMY(tgl)) { $('#dTgl', d).classList.add('invalid'); throw new Error('Tanggal tidak valid. Format: DD/MM/YYYY.'); }
         const lines = $$('.d-qty', d).map((i, n) => {
-          const q = parseInt(i.value, 10) || 0, l = prep.lines[n];
-          if (q < 0 || q > l.siap) { i.classList.add('invalid'); throw new Error(`Jumlah "${l.deskripsi} ${l.ukuran}" maksimal ${l.siap}.`); }
-          return { deskripsi: l.deskripsi, idWarna: l.idWarna, idUkuran: l.idUkuran, qty: q };
-        }).filter(l => l.qty > 0);
+          const l = prep.lines[n], q = i.disabled ? 0 : readQty(i, l, l.siap);
+          return { deskripsi: l.deskripsi, idWarna: l.idWarna, idUkuran: l.idUkuran, qty: String(q) };
+        }).filter(l => Number(l.qty) > 0);
         if (!lines.length) throw new Error('Isi jumlah barang yang dikirim.');
         const v = id => $('#' + id, d).value.trim();
         if (!v('dNama') || !v('dAlamat')) throw new Error('Nama penerima dan alamat kirim wajib diisi.');
@@ -164,8 +182,8 @@
         <div class="sub-h">Jumlah barang</div>
         <div class="list" style="padding:0">${prep.lines.map((l, i) => `
           <div class="li" data-li="${i}">
-            <div class="t"><b>${esc(l.deskripsi)}</b><small>${esc(l.warna)} · ${esc(l.ukuran)} · sekarang ${fmt(l.diSJ)} pcs · bisa ditambah ${fmt(l.siap)}</small></div>
-            <input class="input num e-qty" type="number" inputmode="numeric" min="0" max="${l.diSJ + l.siap}" value="${l.diSJ}" style="width:90px" aria-label="Jumlah di Surat Jalan">
+            <div class="t"><b>${esc(l.deskripsi)}</b> ${l.pakaiQr === false ? noQRTag : ''}<small>${[spec(l), `sekarang ${qtyText(l.diSJ)} ${esc(docUnit(l.satuan))}`, `bisa ditambah ${qtyText(l.siap)}`].filter(Boolean).join(' · ')}</small></div>
+            ${qtyInput('e-qty', l, l.diSJ, l.diSJ + l.siap)}
           </div>`).join('')}</div>
         <p class="hint" id="eSum"></p>
         <div class="sub-h">Penerima</div>
@@ -177,12 +195,12 @@
           <label class="f"><span>Telepon</span><input class="input" id="eTelp" inputmode="tel" value="${esc(prep.telp)}"></label>
           <label class="f w2"><span>Catatan (tampil di Keterangan)</span><input class="input" id="eCat" value="${esc(prep.catatan)}"></label>
         </div>
-        <p class="hint">Mengurangi jumlah: produk yang terakhir di-scan dilepas dan kembali siap kirim. Menambah: diambil dari produk ter-scan yang belum dikirim. Surat Jalan yang sudah ditagih invoice tidak bisa diedit.</p>`,
+        <p class="hint">Barang ber-QR — mengurangi jumlah: produk yang terakhir di-scan dilepas dan kembali siap kirim; menambah: diambil dari produk ter-scan yang belum dikirim. Barang tanpa QR: jumlahnya langsung diganti (maksimal sisa target PO). Surat Jalan yang sudah ditagih invoice tidak bisa diedit.</p>`,
       onOpen: d => {
         const sum = () => {
-          const n = $$('.e-qty', d).reduce((a, i) => a + (parseInt(i.value, 10) || 0), 0);
-          const was = prep.lines.reduce((a, l) => a + l.diSJ, 0);
-          $('#eSum', d).textContent = `Total ${fmt(n)} pcs` + (n !== was ? ` (sebelumnya ${fmt(was)} pcs)` : '');
+          const n = $$('.e-qty', d).reduce((a, i) => a + (parseQty(i.value) || 0), 0);
+          const was = prep.lines.reduce((a, l) => a + Number(l.diSJ), 0), u = esc(totalUnit(prep.lines) || 'barang');
+          $('#eSum', d).textContent = `Total ${qtyText(n)} ${u}` + (Math.abs(n - was) > 1e-9 ? ` (sebelumnya ${qtyText(was)} ${u})` : '');
         };
         $('#eAddr', d).onchange = e => {
           const v = e.target.value; if (!v) return;
@@ -196,11 +214,10 @@
         const tgl = $('#eTgl', d).value;
         if (!validDMY(tgl)) { $('#eTgl', d).classList.add('invalid'); throw new Error('Tanggal tidak valid. Format: DD/MM/YYYY.'); }
         const lines = $$('.e-qty', d).map((i, n) => {
-          const q = parseInt(i.value, 10) || 0, l = prep.lines[n];
-          if (q < 0 || q > l.diSJ + l.siap) { i.classList.add('invalid'); throw new Error(`Jumlah "${l.deskripsi} ${l.ukuran}" maksimal ${l.diSJ + l.siap}.`); }
-          return { deskripsi: l.deskripsi, idWarna: l.idWarna, idUkuran: l.idUkuran, qty: q };
+          const l = prep.lines[n], q = i.disabled ? 0 : readQty(i, l, Number(l.diSJ) + Number(l.siap));
+          return { deskripsi: l.deskripsi, idWarna: l.idWarna, idUkuran: l.idUkuran, qty: String(q) };
         });
-        if (!lines.some(l => l.qty > 0)) throw new Error('Surat Jalan harus berisi minimal 1 barang. Bila tidak jadi dikirim, batalkan Surat Jalannya.');
+        if (!lines.some(l => Number(l.qty) > 0)) throw new Error('Surat Jalan harus berisi minimal 1 barang. Bila tidak jadi dikirim, batalkan Surat Jalannya.');
         const v = id => $('#' + id, d).value.trim();
         if (!v('eNama') || !v('eAlamat')) throw new Error('Nama penerima dan alamat kirim wajib diisi.');
         return { noDN: no, tanggal: tgl, penerima: v('eNama'), alamat: v('eAlamat'), attn: v('eAttn'), telp: v('eTelp'), catatan: v('eCat'), lines };
@@ -267,11 +284,22 @@
     </div>`;
   }
   function summaryTable(dn) {
-    const total = dn.lines.reduce((a, l) => a + l.qty, 0);
-    return `<table><thead><tr><th class="c" style="width:9mm">No</th><th class="c" style="width:22mm">Jumlah</th><th style="width:26mm">Ukuran</th><th style="width:34mm">Warna</th><th>Deskripsi Produk</th></tr></thead><tbody>
-      ${dn.lines.map((l, i) => `<tr><td class="c">${i + 1}</td><td class="c">${fmt(l.qty)}</td><td>${esc(l.ukuran)}</td><td>${esc(l.warna)}</td><td>${esc(l.deskripsi)}</td></tr>`).join('')}
-      <tr class="tot"><td colspan="3" class="c">Total Jumlah</td><td colspan="2" class="c">${fmt(total)} ${esc(totalUnit(dn.lines))}</td></tr>
+    const total = dn.lines.reduce((a, l) => a + Number(l.qty), 0);
+    const oneUnit = totalUnit(dn.lines);          // kosong = satuan berbeda-beda (mis. Kilogram + Pcs)
+    const qtyCell = l => qtyText(l.qty) + (oneUnit ? '' : ' ' + esc(docUnit(l.satuan)));
+    return `<table><thead><tr><th class="c" style="width:9mm">No</th><th class="c" style="width:${oneUnit ? 22 : 30}mm">Jumlah</th><th style="width:26mm">Ukuran</th><th style="width:34mm">Warna</th><th>Deskripsi Produk</th></tr></thead><tbody>
+      ${dn.lines.map((l, i) => `<tr><td class="c">${i + 1}</td><td class="c">${qtyCell(l)}</td><td>${esc(l.ukuran || '-')}</td><td>${esc(l.warna || '-')}</td><td>${esc(l.deskripsi)}</td></tr>`).join('')}
+      <tr class="tot"><td colspan="3" class="c">Total Jumlah</td><td colspan="2" class="c">${oneUnit ? `${qtyText(total)} ${esc(oneUnit)}` : `${fmt(dn.lines.length)} jenis barang`}</td></tr>
     </tbody></table>`;
+  }
+  // Packing List: barang tanpa QR tidak punya kode item, jadi dicantumkan per jumlah.
+  function noQRSection(dn) {
+    const rows = dn.lines.filter(l => l.pakaiQr === false);
+    if (!rows.length) return '';
+    return `<h2>Barang tanpa kode QR (${fmt(rows.length)} jenis)</h2>
+      <table><thead><tr><th class="c" style="width:10mm">No</th><th class="c" style="width:32mm">Jumlah</th><th style="width:22mm">Ukuran</th><th style="width:30mm">Warna</th><th>Deskripsi Produk</th></tr></thead><tbody>
+        ${rows.map((l, i) => `<tr><td class="c">${i + 1}</td><td class="c">${qtyText(l.qty)} ${esc(docUnit(l.satuan))}</td><td>${esc(l.ukuran || '-')}</td><td>${esc(l.warna || '-')}</td><td>${esc(l.deskripsi)}</td></tr>`).join('')}
+      </tbody></table>`;
   }
   function footer(note) {
     return `<div class="foot"><p>${note}</p><p>Dihasilkan pada: ${nowLong()}</p></div>`;
@@ -296,10 +324,11 @@
       <h1>PACKING LIST</h1><div class="sub">Daftar Rincian Barang per Kode Item</div>
       ${infoBlock(dn, ['No. Packing List', dn.noPL], ['No. Surat Jalan:', dn.noDN])}
       ${summaryTable(dn)}
-      <h2>Rincian barang (${fmt(dn.items.length)} item)</h2>
+      ${dn.items.length ? `<h2>Rincian barang ber-QR (${fmt(dn.items.length)} item)</h2>
       <table><thead><tr><th class="c" style="width:10mm">No</th><th style="width:44mm">Kode Item</th><th style="width:22mm">Ukuran</th><th style="width:30mm">Warna</th><th>Deskripsi Produk</th></tr></thead><tbody>
         ${dn.items.map((x, i) => `<tr><td class="c">${i + 1}</td><td class="mono">${esc(x.itemCode)}</td><td>${esc(x.ukuran)}</td><td>${esc(x.warna)}</td><td>${esc(x.deskripsi)}</td></tr>`).join('')}
-      </tbody></table>
+      </tbody></table>` : ''}
+      ${noQRSection(dn)}
       <div class="sig"><div><b>Disiapkan oleh</b><div class="sp"></div><div class="ln"></div></div><div><b>Diperiksa oleh</b><div class="sp"></div><div class="ln"></div></div></div>
       ${footer('Packing List ini merupakan lampiran Surat Jalan ' + esc(dn.noDN) + '.')}
     </div>`;
@@ -336,7 +365,7 @@
           <button class="btn primary" id="btnNewDN" hidden><i class="fa-solid fa-plus"></i> Buat Surat Jalan</button></div>
       </div>
       <div class="card list" id="dnList"></div>
-      <p class="hint">Satu Surat Jalan untuk satu PO. Barang yang dikirim diambil dari hasil scan yang belum pernah dikirim. Packing List memakai nomor yang sama dan berisi rincian kode item.
+      <p class="hint">Satu Surat Jalan untuk satu PO. Barang ber-QR yang dikirim diambil dari hasil scan yang belum pernah dikirim; barang tanpa QR (bahan baku / trading) cukup diisi jumlahnya. Packing List memakai nomor yang sama dan berisi rincian kode item.
         Surat Jalan bisa <b>diedit</b> (tanggal, penerima, jumlah barang) selama belum ditagih invoice.</p>
     </section>`;
 

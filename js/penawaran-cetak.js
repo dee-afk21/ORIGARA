@@ -9,7 +9,7 @@
   const BULAN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
   const longDate = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? `${+m[3]} ${BULAN[+m[2] - 1]} ${m[1]}` : (iso || '-'); };
   const rp0 = n => Math.round(Number(n || 0)).toLocaleString('id-ID');
-  const qtyFmt = n => Number(n || 0).toLocaleString('id-ID');
+  const qtyFmt = n => Number(n || 0).toLocaleString('id-ID', { maximumFractionDigits: 2 });
   const UNIT = { 'UM.0021': 'Pcs', 'UM.0019': 'Set', 'UM.0017': 'Lusin', 'UM.0018': 'Unit', 'UM.0022': 'Boks', 'UM.0037': 'Karton' };
   const uom = c => UNIT[c] || (typeof window.unitName === 'function' ? window.unitName(c) : c);
 

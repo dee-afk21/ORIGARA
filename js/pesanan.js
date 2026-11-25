@@ -15,8 +15,8 @@
   const JN = { PROFORMA: 'Proforma', INVOICE: 'Invoice', DP: 'Invoice DP', PELUNASAN: 'Invoice Pelunasan' };
   const dmy = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? `${m[3]}/${m[2]}/${m[1]}` : (iso || ''); };
   const plusDaysDMY = n => { const d = new Date(Date.now() + n * 864e5), p = x => String(x).padStart(2, '0'); return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()}`; };
-  const totalQty = s => s.items.reduce((a, i) => a + i.qty, 0);
-  const itemsLine = s => s.items.slice(0, 3).map(i => `${i.deskripsi} ${i.warna} ${i.ukuran} ×${fmt(i.qty)}`).join(' · ') + (s.items.length > 3 ? ` · +${s.items.length - 3} baris` : '');
+  const totalQty = s => s.items.reduce((a, i) => a + Number(i.qty), 0);
+  const itemsLine = s => s.items.slice(0, 3).map(i => `${[i.deskripsi, i.warna, i.ukuran].filter(Boolean).join(' ')} ×${qtyText(i.qty)}`).join(' · ') + (s.items.length > 3 ? ` · +${s.items.length - 3} baris` : '');
   const stTag = s => `<span class="tag ${ST[s.status] || ''}">${esc(ST_LABEL[s.status] || s.status)}</span>`;
 
   /* =====================================================================
@@ -44,7 +44,7 @@
         ${s.perihal ? `<p><b>${esc(s.perihal)}</b></p>` : ''}
         <p>${esc(itemsLine(s))}</p>
         <div class="tags">
-          <span class="tag">${fmt(totalQty(s))} pcs</span>
+          <span class="tag">${qtyText(totalQty(s))} qty</span>
           <span class="tag ok">Total ${rupiah(s.total)}</span>
           ${s.berlaku ? `<span class="tag ${s.kedaluwarsa ? 'warn' : ''}">${s.kedaluwarsa ? '<i class="fa-solid fa-clock"></i> Lewat masa berlaku ' : 'Berlaku s/d '}${esc(dmy(s.berlaku))}</span>` : ''}
           ${s.noPO ? `<span class="tag ok">PO ${esc(s.noPO)}</span>` : ''}
@@ -70,9 +70,9 @@
   function itemRow(it = {}) {
     return `<div class="sp-row pnw-row">
       <input class="input s-desc" list="dlPnwDesc" value="${esc(it.deskripsi)}" placeholder="Deskripsi barang" aria-label="Deskripsi barang">
-      <input class="input s-warna" list="dlWarna" value="${esc(it.warna)}" placeholder="Warna" aria-label="Warna" autocomplete="off">
-      <input class="input s-size" list="dlUkuran" value="${esc(it.ukuran)}" placeholder="Ukuran" aria-label="Ukuran" autocomplete="off">
-      <input class="input s-qty num" type="number" min="1" inputmode="numeric" value="${esc(it.qty)}" placeholder="Qty" aria-label="Jumlah">
+      <input class="input s-warna" list="dlWarna" value="${esc(it.warna)}" placeholder="Warna (opsional)" aria-label="Warna" autocomplete="off">
+      <input class="input s-size" list="dlUkuran" value="${esc(it.ukuran)}" placeholder="Ukuran (opsional)" aria-label="Ukuran" autocomplete="off">
+      <input class="input s-qty num" type="text" inputmode="decimal" value="${it.qty != null ? esc(String(it.qty).replace('.', ',')) : ''}" placeholder="Qty" aria-label="Jumlah" autocomplete="off">
       <select class="input s-unit" aria-label="Satuan">${unitOptions(it.satuan || 'UM.0021')}</select>
       <div class="rp"><input class="input num s-price" inputmode="decimal" value="${it.harga ? esc(fmtPrice(it.harga)) : ''}" placeholder="Harga" aria-label="Harga satuan"></div>
       <button type="button" class="btn icon t-bad" data-rowdel aria-label="Hapus baris"><i class="fa-solid fa-trash"></i></button>
@@ -106,8 +106,8 @@
         const box = $('#pRows', d);
         const sum = () => {
           let q = 0, sub = 0;
-          $$('.pnw-row', d).forEach(r => { const n = parseInt($('.s-qty', r).value, 10) || 0, h = parsePrice($('.s-price', r).value); q += n; sub += Number.isFinite(h) ? n * h : 0; });
-          $('#pSum', d).textContent = `${$$('.pnw-row', d).length} baris · ${fmt(q)} pcs · subtotal ${rupiah(sub)} (PPN dihitung otomatis di dokumen)`;
+          $$('.pnw-row', d).forEach(r => { const n = parseQty($('.s-qty', r).value) || 0, h = parsePrice($('.s-price', r).value); q += n; sub += Number.isFinite(h) ? Math.round(n * h * 100) / 100 : 0; });
+          $('#pSum', d).textContent = `${$$('.pnw-row', d).length} baris · ${qtyText(q)} qty · subtotal ${rupiah(sub)} (PPN dihitung otomatis di dokumen)`;
         };
         const loadPrep = async id => {
           prep = null; if (!id) return;
@@ -133,10 +133,11 @@
         if (!validDMY(v('pTgl'))) throw new Error('Tanggal penawaran tidak valid. Format: DD/MM/YYYY.');
         if (v('pBerlaku') && !validDMY(v('pBerlaku'))) throw new Error('Tanggal berlaku tidak valid. Format: DD/MM/YYYY.');
         const items = $$('.pnw-row', d).map((r, i) => {
-          const it = { deskripsi: $('.s-desc', r).value.trim(), idWarna: idOf('warna', $('.s-warna', r).value), idUkuran: idOf('ukuran', $('.s-size', r).value),
-                       qtyTarget: parseInt($('.s-qty', r).value, 10) || 0, satuan: $('.s-unit', r).value, harga: parsePrice($('.s-price', r).value) };
-          if (!it.deskripsi || !it.idWarna || !it.idUkuran) throw new Error(`Lengkapi barang baris ke-${i + 1} (deskripsi, warna, ukuran).`);
-          if (it.qtyTarget < 1) throw new Error(`Isi jumlah barang baris ke-${i + 1}.`);
+          const w = $('.s-warna', r).value.trim(), z = $('.s-size', r).value.trim(), q = parseQty($('.s-qty', r).value);
+          const it = { deskripsi: $('.s-desc', r).value.trim(), idWarna: w ? idOf('warna', w) : '', idUkuran: z ? idOf('ukuran', z) : '',
+                       qtyTarget: Number.isFinite(q) ? String(q) : '', satuan: $('.s-unit', r).value, harga: parsePrice($('.s-price', r).value) };
+          if (!it.deskripsi) throw new Error(`Isi deskripsi barang baris ke-${i + 1}.`);
+          if (!Number.isFinite(q) || q <= 0) { $('.s-qty', r).classList.add('invalid'); throw new Error(`Isi jumlah barang baris ke-${i + 1} (boleh desimal, maks. 2 angka di belakang koma).`); }
           if (!Number.isFinite(it.harga) || it.harga <= 0) { $('.s-price', r).classList.add('invalid'); throw new Error(`Isi harga barang baris ke-${i + 1}.`); }
           return it;
         });
@@ -161,25 +162,48 @@
      ===================================================================== */
   async function approve(no) {
     const s = (ui.list || []).find(x => x.no === no); if (!s) return;
+    // Bisa di-scan QR? Perlu warna + ukuran dan jumlah bulat.
+    const qrOK = i => !!(i.idWarna && i.idUkuran) && Number.isInteger(Number(i.qty));
+    const defJenis = s.items.every(qrOK) ? 'PRODUKSI' : s.items.some(qrOK) ? 'CAMPUR' : 'TANPA_QR';
+    const seg = (j, icon, label, sub) => `<button type="button" data-jenis="${j}" class="${j === defJenis ? 'on' : ''}"><i class="fa-solid ${icon}"></i><b>${label}</b><small>${sub}</small></button>`;
     const res = await modal({
       title: `Klien menyetujui ${no}?`, text: `${s.pelanggan} · total ${rupiah(s.total)}`, icon: 'fa-handshake', tone: 'ok', wide: true,
       confirmText: 'Setujui & buat PO',
       html: `
         ${s.kedaluwarsa ? '<div class="note">Penawaran ini sudah lewat masa berlaku. Pastikan harga masih sesuai.</div>' : ''}
+        <div class="f"><span>Jenis PO *</span><div class="jenis-seg" id="aJenis">
+          ${seg('PRODUKSI', 'fa-qrcode', 'Produksi', 'Semua di-scan QR')}${seg('TANPA_QR', 'fa-boxes-stacked', 'Tanpa QR', 'Bahan baku / trading')}${seg('CAMPUR', 'fa-layer-group', 'Campur', 'Pilih per barang')}
+        </div></div>
         <div class="f2">
           <label class="f"><span>Nomor PO</span><input class="input mono" id="aPO" value="${esc(no)}"></label>
-          <label class="f"><span>MOP *</span><input class="input" id="aMOP" placeholder="mis. MCTG/26/13048"></label>
           <div class="f"><span>Tanggal PO (tanggal klien setuju) *</span>${dateField('aTgl', todayDMY())}</div>
-          <div class="f"><span>Tanggal produksi *</span>${dateField('aProd', todayDMY())}</div>
+          <label class="f a-qr"><span>MOP *</span><input class="input" id="aMOP" placeholder="mis. MCTG/26/13048"></label>
+          <div class="f a-qr"><span>Tanggal produksi *</span>${dateField('aProd', todayDMY())}</div>
         </div>
-        <div class="list" style="padding:0">${s.items.map(i => `<div class="li"><div class="t"><b>${esc(i.deskripsi)}</b><small>${esc(i.warna)} · ${esc(i.ukuran)} · ${fmt(i.qty)} × ${rupiah(i.harga)}</small></div></div>`).join('')}</div>
-        <p class="hint">Barang, jumlah, harga, dan satuan ikut menjadi PO. Nomor PO bawaan = nomor penawaran (tampil di invoice dan XML Coretax sebagai nomor PO).</p>`,
+        <div class="list" style="padding:0">${s.items.map((i, n) => `<div class="li"><div class="t"><b>${esc(i.deskripsi)}</b><small>${[i.warna, i.ukuran].filter(Boolean).map(esc).join(' · ')}${i.warna || i.ukuran ? ' · ' : ''}${qtyText(i.qty)} × ${rupiah(i.harga)}</small></div>
+          <label class="qr-tog a-tog" style="grid-column:auto"><input type="checkbox" class="a-qrline" data-n="${n}" ${qrOK(i) ? 'checked' : ''}><span><i class="fa-solid fa-qrcode"></i> Pakai QR</span></label></div>`).join('')}</div>
+        <p class="hint">Barang, jumlah, harga, dan satuan ikut menjadi PO. Nomor PO bawaan = nomor penawaran (tampil di invoice dan XML Coretax sebagai nomor PO).
+          Barang ber-QR wajib punya warna &amp; ukuran dan jumlah bulat — bila belum, edit penawarannya dulu.</p>`,
+      onOpen: d => {
+        const apply = j => {
+          $$('#aJenis [data-jenis]', d).forEach(b => b.classList.toggle('on', b.dataset.jenis === j));
+          $$('.a-qr', d).forEach(el => { el.hidden = j === 'TANPA_QR'; });
+          $$('.a-tog', d).forEach(el => { el.style.display = j === 'CAMPUR' ? 'inline-flex' : 'none'; });
+        };
+        $('#aJenis', d).onclick = e => { const b = e.target.closest('[data-jenis]'); if (b) apply(b.dataset.jenis); };
+        apply(defJenis);
+      },
       collect: d => {
+        const jenis = ($('#aJenis .on', d) || {}).dataset.jenis || 'PRODUKSI';
         const mop = $('#aMOP', d).value.trim(), tgl = $('#aTgl', d).value, prod = $('#aProd', d).value;
-        if (!mop) throw new Error('MOP wajib diisi.');
         if (!validDMY(tgl)) throw new Error('Tanggal PO tidak valid.');
-        if (!validDMY(prod)) throw new Error('Tanggal produksi tidak valid.');
-        return { no, noPO: $('#aPO', d).value.trim(), mop, tglPO: tgl, tglProduksi: prod };
+        if (jenis !== 'TANPA_QR') {
+          if (!mop) throw new Error('MOP wajib diisi.');
+          if (!validDMY(prod)) throw new Error('Tanggal produksi tidak valid.');
+        }
+        const qr = $$('.a-qrline', d).map(c => c.checked);
+        if (jenis === 'CAMPUR' && (qr.every(Boolean) || !qr.some(Boolean))) throw new Error('Jenis Campur: centang sebagian barang sebagai "Pakai QR", jangan semua atau tidak sama sekali.');
+        return { no, noPO: $('#aPO', d).value.trim(), jenis, mop: jenis === 'TANPA_QR' ? '' : mop, tglPO: tgl, tglProduksi: jenis === 'TANPA_QR' ? '' : prod, qr };
       },
       action: data => api('approvePNW', data)
     });
@@ -237,11 +261,11 @@
         <div class="rec-h"><div class="t"><b class="mono">${esc(s.no)}</b><small>${esc(dmy(s.tanggal))}${s.perihal ? ' · ' + esc(s.perihal) : ''}</small></div>
           <span class="tag ${ST[s.status] || ''}">${esc({ Menunggu: 'Menunggu persetujuan Anda', Disetujui: 'Disetujui', Ditolak: 'Ditolak' }[s.status] || s.status)}</span></div>
         <p>${esc(itemsLine(s))}</p>
-        <div class="tags"><span class="tag">${fmt(totalQty(s))} pcs</span><span class="tag ok">Total ${rupiah(s.total)}</span>${s.berlaku ? `<span class="tag">Berlaku s/d ${esc(dmy(s.berlaku))}</span>` : ''}</div>
+        <div class="tags"><span class="tag">${qtyText(totalQty(s))} qty</span><span class="tag ok">Total ${rupiah(s.total)}</span>${s.berlaku ? `<span class="tag">Berlaku s/d ${esc(dmy(s.berlaku))}</span>` : ''}</div>
         ${s.status === 'Disetujui' ? `
           <div class="tags"><span class="tag ok">No. PO ${esc(s.noPO)}</span></div>
-          <div><small class="hint">Produksi ${fmt(pr.selesai)} / ${fmt(pr.target)} pcs · dikirim ${fmt(pr.dikirim)} pcs</small><div class="bar ${pct >= 100 ? 'full' : ''}"><i style="width:${pct}%"></i></div></div>
-          ${(s.suratJalan || []).length ? `<div class="sub-h">Pengiriman</div>${s.suratJalan.map(d => `<div class="row" style="justify-content:space-between;flex-wrap:wrap"><span class="mono">${esc(d.no)} · ${esc(dmy(d.tanggal))} · ${fmt(d.qty)} pcs</span><span class="row"><button class="btn sm" data-myp="dn:${esc(d.no)}">Surat Jalan</button><button class="btn sm" data-myp="pl:${esc(d.no)}">Packing List</button></span></div>`).join('')}` : ''}
+          <div><small class="hint">Progres ${qtyText(pr.selesai)} / ${qtyText(pr.target)} · dikirim ${qtyText(pr.dikirim)}</small><div class="bar ${pct >= 100 ? 'full' : ''}"><i style="width:${pct}%"></i></div></div>
+          ${(s.suratJalan || []).length ? `<div class="sub-h">Pengiriman</div>${s.suratJalan.map(d => `<div class="row" style="justify-content:space-between;flex-wrap:wrap"><span class="mono">${esc(d.no)} · ${esc(dmy(d.tanggal))} · ${qtyText(d.qty)} barang</span><span class="row"><button class="btn sm" data-myp="dn:${esc(d.no)}">Surat Jalan</button><button class="btn sm" data-myp="pl:${esc(d.no)}">Packing List</button></span></div>`).join('')}` : ''}
           ${(s.tagihan || []).length ? `<div class="sub-h">Tagihan</div>${s.tagihan.map(v => `<div class="row" style="justify-content:space-between"><span><span class="mono">${esc(v.no)}</span> · ${esc(JN[v.jenis] || v.jenis)} · ${rupiah(v.total)}</span><button class="btn sm" data-myp="inv:${esc(v.no)}"><i class="fa-solid fa-print"></i></button></div>`).join('')}` : ''}` : ''}
         ${s.status === 'Ditolak' && s.alasan ? `<div class="note">Alasan: ${esc(s.alasan)}</div>` : ''}
         <div class="row" style="justify-content:flex-end"><button class="btn sm" data-myp="pnw:${esc(s.no)}"><i class="fa-solid fa-print"></i> Cetak penawaran</button></div>

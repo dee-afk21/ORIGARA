@@ -36,9 +36,9 @@
     const totalFak = r.faktur.reduce((a, x) => ({ dpp: a.dpp + Number(x.dpp), dl: a.dl + Number(x.dppLain), ppn: a.ppn + Number(x.ppn) }), { dpp: 0, dl: 0, ppn: 0 });
     $('#rBody').innerHTML = `
       <div class="stats">
-        ${stat('fa-file-circle-plus', fmt(s.poBaru), 'PO baru', `${fmt(s.pcsPO)} pcs · Rp ${rp(s.nilaiPO)}`)}
+        ${stat('fa-file-circle-plus', fmt(s.poBaru), 'PO baru', `${fmt(s.pcsPO)} qty · Rp ${rp(s.nilaiPO)}`)}
         ${stat('fa-qrcode', fmt(s.pcsScan), 'Pcs ter-scan (produksi)')}
-        ${stat('fa-truck', fmt(s.pcsKirim), 'Pcs dikirim', `${fmt(s.sjTerbit)} Surat Jalan`)}
+        ${stat('fa-truck', fmt(s.pcsKirim), 'Barang dikirim', `${fmt(s.sjTerbit)} Surat Jalan`)}
         ${stat('fa-file-invoice-dollar', 'Rp ' + rp(s.totalInvoice), `${fmt(s.invoice)} invoice (incl. PPN)`, `DPP ${rp(s.dpp)} · PPN ${rp(s.ppn)}`)}
       </div>
       <div class="tags">
@@ -80,7 +80,7 @@
       const add = (name, rows) => XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), name);
       add('Ringkasan', [['Laporan periode', `${ui.d1} s/d ${ui.d2}`], [],
         ['PO baru', s.poBaru], ['Pcs di PO baru', s.pcsPO], ['Nilai PO baru (Rp)', Number(s.nilaiPO)], ['Pcs ter-scan', s.pcsScan],
-        ['Surat Jalan terbit', s.sjTerbit], ['Pcs dikirim', s.pcsKirim], ['Invoice terbit', s.invoice], ['DPP (Rp)', Number(s.dpp)], ['PPN (Rp)', Number(s.ppn)],
+        ['Surat Jalan terbit', s.sjTerbit], ['Barang dikirim', s.pcsKirim], ['Invoice terbit', s.invoice], ['DPP (Rp)', Number(s.dpp)], ['PPN (Rp)', Number(s.ppn)],
         ['Total invoice (Rp)', Number(s.totalInvoice)], ['Proforma belum dibayar', s.proformaTerbuka], ['Nilai proforma belum dibayar (Rp)', Number(s.nilaiProformaTerbuka)],
         ['Surat Pesanan masuk', s.spBaru], ['Surat Pesanan menunggu', s.spMenunggu]]);
       add('Produksi Harian', [['Tanggal', 'Pcs ter-scan'], ...r.perHari.map(x => [dmy(x.tanggal), x.scan])]);

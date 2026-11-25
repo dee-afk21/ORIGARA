@@ -388,6 +388,33 @@
     .irow .amt:empty { display: none; }
     .irow .amt b { margin-left: 8px; font-size: 13.5px; color: var(--ink); }
     .irow-note { grid-column: 1 / -1; color: var(--ink-3); font-size: 12px; margin-top: -2px; }
+    /* v0.8.0: jenis PO (Produksi / Tanpa QR / Campur) */
+    .fields .f.full { grid-column: 1 / -1; }
+    .jenis-seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .jenis-seg button { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 10px; align-items: center; text-align: left;
+      padding: 10px 12px; border-radius: 12px; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer;
+      transition: border-color .15s, background .15s; font: inherit; }
+    .jenis-seg button i { grid-row: span 2; font-size: 18px; color: var(--ink-3); width: 22px; text-align: center; }
+    .jenis-seg button b { font-size: 14px; }
+    .jenis-seg button small { color: var(--ink-3); font-size: 12px; line-height: 1.3; }
+    .jenis-seg button:hover { border-color: var(--brand); }
+    .jenis-seg button.on { border-color: var(--brand); background: var(--brand-soft); }
+    .jenis-seg button.on i { color: var(--brand); }
+    .jenis-seg button:disabled { opacity: .45; cursor: not-allowed; }
+    #poForm.j-TANPA_QR .qr-only { display: none; }
+    .jenis-note { margin: 12px 0 0; }
+    .qr-tog { grid-column: 1 / -1; display: none; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink-2); cursor: pointer; user-select: none; }
+    #poForm.j-CAMPUR .qr-tog { display: inline-flex; }
+    .qr-tog input { width: 16px; height: 16px; accent-color: var(--brand); }
+    .qr-tog input:disabled + span { opacity: .6; }
+    .irow.noqr .i-warna::placeholder, .irow.noqr .i-size::placeholder { font-style: italic; }
+    .jenis-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 99px;
+      background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--line); vertical-align: middle; white-space: nowrap; }
+    @media (max-width: 700px) {
+      .jenis-seg button { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; row-gap: 4px; padding: 9px 6px; }
+      .jenis-seg button i { grid-row: auto; }
+      .jenis-seg button small { display: none; }
+    }
     .rp { position: relative; }
     .rp::before { content: 'Rp'; position: absolute; left: 11px; top: 50%; transform: translateY(-50%); font-size: 12.5px; font-weight: 700; color: var(--ink-3); pointer-events: none; }
     .rp .input { padding-left: 36px; text-align: right; }
@@ -952,12 +979,20 @@
             <button type="button" class="btn sm" id="btnCancelEdit" hidden><i class="fa-solid fa-xmark"></i> Batal edit</button>
           </div>
           <div class="fields">
+            <div class="f full"><span>Jenis PO *</span>
+              <div class="jenis-seg" id="fJenis" role="radiogroup" aria-label="Jenis PO">
+                <button type="button" data-jenis="PRODUKSI" role="radio"><i class="fa-solid fa-qrcode"></i><b>Produksi</b><small>Semua barang di-scan QR</small></button>
+                <button type="button" data-jenis="TANPA_QR" role="radio"><i class="fa-solid fa-boxes-stacked"></i><b>Tanpa QR</b><small>Bahan baku / trading, tanpa scan</small></button>
+                <button type="button" data-jenis="CAMPUR" role="radio"><i class="fa-solid fa-layer-group"></i><b>Campur</b><small>Pilih per baris barang</small></button>
+              </div>
+            </div>
             <label class="f"><span>Nomor PO *</span><input class="input" id="fNoPO" placeholder="mis. PO-2026-001"></label>
             <div class="f"><span>Pelanggan *</span><div class="with-btn"><input class="input" id="fPelanggan" list="dlPelanggan" placeholder="Ketik atau pilih pelanggan…" autocomplete="off" aria-label="Pelanggan"><button type="button" class="btn icon" id="btnNewCust" title="Tambah pelanggan baru" aria-label="Tambah pelanggan baru" hidden><i class="fa-solid fa-user-plus"></i></button></div></div>
             <div class="f"><span>Tanggal PO *</span><div data-date="fTglPO"></div></div>
-            <label class="f w3"><span>MOP *</span><input class="input" id="fMOP" placeholder="mis. MOP-001"></label>
-            <div class="f w3"><span>Tanggal Produksi *</span><div data-date="fTglProd"></div></div>
+            <label class="f w3 qr-only"><span>MOP *</span><input class="input" id="fMOP" placeholder="mis. MOP-001"></label>
+            <div class="f w3 qr-only"><span>Tanggal Produksi *</span><div data-date="fTglProd"></div></div>
           </div>
+          <p class="note jenis-note" id="fJenisNote" hidden></p>
 
           <div class="items-head"><h3>Rincian item, kuota &amp; harga</h3><span class="total-pill" id="formTotal">0 baris · 0 pcs</span></div>
           <div class="irow head"><div>Deskripsi barang</div><div>Warna</div><div>Ukuran</div><div>QTY target</div><div>Satuan</div><div>Harga satuan</div><div></div></div>
@@ -1016,7 +1051,7 @@
 /* KONFIGURASI server ada di js/config.js (dipakai juga oleh verifikasi.html). */
 const CONFIG = window.COA_CONFIG || { SUPABASE_URL: '', SUPABASE_KEY: '', API_URL: '', SCAN_QUEUE: 3 };
 // Naikkan setiap kali file ini diubah; tampil di halaman login dan dialog Keluar.
-const APP_VERSION = '0.7.1';
+const APP_VERSION = '0.8.0';
 const LIB = {
   qr: 'https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js',
   xlsx: 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js'
@@ -1579,6 +1614,12 @@ async function selectPO(noPO) {
   focusScan();
 }
 function renderDetails(d, bumpKey) {
+  // v0.8.0: halaman Scan hanya menampilkan barang ber-QR (barang tanpa QR dari PO Campur disembunyikan)
+  if ((d.items || []).some(i => i.pakaiQr === false)) {
+    const items = d.items.filter(i => i.pakaiQr !== false);
+    d = Object.assign({}, d, { items, totalTarget: items.reduce((a, i) => a + Number(i.qtyTarget), 0),
+                               totalScanned: items.reduce((a, i) => a + Number(i.qtyScanned), 0) });
+  }
   state.po = d;
   if (document.activeElement !== $('#poInput')) { $('#poSelect').value = d.noPO; syncPOInput(); }
   $('#poEmpty').hidden = true; $('#poPanel').hidden = false; $('#scanCard').hidden = false;
@@ -1917,7 +1958,7 @@ function renderPOList() {
     stat('fa-file-invoice', fmt(list.length), 'Total PO') +
     stat('fa-spinner', fmt(count('In Progress') + count('Pending')), 'Belum selesai') +
     stat('fa-circle-check', fmt(count('Completed') + count('Exported')), 'Selesai / exported') +
-    stat('fa-boxes-stacked', `${fmt(scanned)} <small>/ ${fmt(target)}</small>`, 'Pcs ter-scan');
+    stat('fa-boxes-stacked', `${qtyText(scanned)} <small>/ ${qtyText(target)}</small>`, 'Progres (scan / kirim)');
 
   const filters = [['all', 'Semua', list.length], ['Pending', 'Pending', count('Pending')], ['In Progress', 'In Progress', count('In Progress')], ['Completed', 'Completed', count('Completed')], ['Exported', 'Exported', count('Exported')]];
   $('#poFilters').innerHTML = filters.map(f => `<button type="button" class="chip ${state.poFilter === f[0] ? 'on' : ''}" data-filter="${f[0]}">${f[1]}<span>${f[2]}</span></button>`).join('');
@@ -1933,17 +1974,19 @@ function renderPOList() {
   $('#poTable').innerHTML = `<div class="tr th"><div>No PO</div><div>Pelanggan</div><div>Tgl PO</div><div>MOP</div><div>Produksi</div><div>Progres</div><div>Status</div><div></div></div>` +
     rows.map(p => {
       const cust = esc(nameOf('pelanggan', p.idPelanggan));
+      const noQR = p.jenis === 'TANPA_QR';
+      const unitLbl = noQR ? 'terkirim' : p.jenis === 'CAMPUR' ? 'scan / kirim' : 'pcs';
       return `<div class="tr" data-po="${esc(p.noPO)}">
-        <div class="c-po"><b class="mono">${esc(p.noPO)}</b><small>${cust}</small></div>
+        <div class="c-po"><b class="mono">${esc(p.noPO)}</b> ${jenisTag(p.jenis)}<small>${cust}</small></div>
         <div class="c-cust">${cust}</div>
         <div class="c-d1 num" data-l="Tgl PO">${esc(isoToDMY(p.tglPO))}</div>
-        <div class="c-mop" data-l="MOP">${esc(p.mop)}</div>
-        <div class="c-d2 num" data-l="Produksi">${esc(isoToDMY(p.tglProduksi))}</div>
-        <div class="c-prog"><div class="bar ${p.percent >= 100 ? 'full' : ''}"><i style="width:${p.percent}%"></i></div><small>${fmt(p.totalScanned)} / ${fmt(p.totalTarget)} pcs · ${p.percent}%${Number(p.nilai) > 0 ? ' · ' + rupiah(p.nilai) : ''}</small></div>
+        <div class="c-mop" data-l="MOP">${noQR ? '<span class="muted">–</span>' : esc(p.mop)}</div>
+        <div class="c-d2 num" data-l="Produksi">${noQR ? '<span class="muted">–</span>' : esc(isoToDMY(p.tglProduksi))}</div>
+        <div class="c-prog"><div class="bar ${p.percent >= 100 ? 'full' : ''}"><i style="width:${p.percent}%"></i></div><small>${qtyText(p.totalScanned)} / ${qtyText(p.totalTarget)} ${unitLbl} · ${p.percent}%${Number(p.nilai) > 0 ? ' · ' + rupiah(p.nilai) : ''}</small></div>
         <div class="c-status">${statusPill(p.status)}</div>
         <div class="c-act">
           ${can('po.ubah') ? '<button class="btn sm icon" data-act="edit" title="Edit PO" aria-label="Edit PO"><i class="fa-solid fa-pen"></i></button>' : ''}
-          ${can('po.export') ? '<button class="btn sm icon t-ok" data-act="export" title="Export XLSX" aria-label="Export XLSX"><i class="fa-solid fa-file-excel"></i></button>' : ''}
+          ${can('po.export') && !noQR ? '<button class="btn sm icon t-ok" data-act="export" title="Export XLSX" aria-label="Export XLSX"><i class="fa-solid fa-file-excel"></i></button>' : ''}
           ${can('po.hapus') ? '<button class="btn sm icon t-bad" data-act="del" title="Hapus PO" aria-label="Hapus PO"><i class="fa-solid fa-trash"></i></button>' : ''}
         </div>
       </div>`;
@@ -1992,18 +2035,61 @@ async function exportPO(noPO) {
 /* =====================================================================
    FORM PO (BARU + EDIT)
    ===================================================================== */
+/* v0.8.0: jenis PO. PRODUKSI = semua barang di-scan QR; TANPA_QR = bahan baku / trading (tanpa MOP & tgl produksi);
+   CAMPUR = dipilih per baris ("Pakai QR"). Barang tanpa QR: warna/ukuran boleh kosong, jumlah boleh desimal. */
+const JENIS_PO = { PRODUKSI: 'Produksi', TANPA_QR: 'Tanpa QR', CAMPUR: 'Campur' };
+const jenisTag = j => j && j !== 'PRODUKSI' ? `<span class="jenis-tag" title="Jenis PO"><i class="fa-solid ${j === 'TANPA_QR' ? 'fa-boxes-stacked' : 'fa-layer-group'}"></i>${JENIS_PO[j]}</span>` : '';
+/** "12,5" / "12.5" / "12" -> 12.5 / 12. Kosong -> 0. Tidak valid -> NaN. */
+function parseQty(v) {
+  const s = String(v ?? '').trim().replace(',', '.');
+  if (!s) return 0;
+  return /^\d{1,12}(\.\d{1,2})?$/.test(s) ? Number(s) : NaN;
+}
+const qtyText = n => Number(n || 0).toLocaleString('id-ID', { maximumFractionDigits: 2 });
+function formJenis() { return state.formJenis || 'PRODUKSI'; }
+function setFormJenis(j) {
+  state.formJenis = j;
+  const form = $('#poForm');
+  form.classList.remove('j-PRODUKSI', 'j-TANPA_QR', 'j-CAMPUR');
+  form.classList.add('j-' + j);
+  $$('#fJenis [data-jenis]').forEach(b => { b.classList.toggle('on', b.dataset.jenis === j); b.setAttribute('aria-checked', b.dataset.jenis === j); });
+  const note = $('#fJenisNote');
+  note.hidden = j === 'PRODUKSI';
+  note.innerHTML = j === 'TANPA_QR'
+    ? '<i class="fa-solid fa-circle-info"></i> PO tanpa QR tidak perlu MOP, tanggal produksi, maupun scan. Warna &amp; ukuran boleh dikosongkan, jumlah boleh desimal (mis. 12,5 kg). Barang langsung bisa dibuatkan Surat Jalan.'
+    : '<i class="fa-solid fa-circle-info"></i> Centang <b>Pakai QR</b> pada barang yang di-scan. Barang tanpa centang tidak di-scan: warna &amp; ukuran boleh kosong dan jumlahnya boleh desimal.';
+  $$('#formItems .irow').forEach(syncRowQR);
+  updateFormTotal();
+}
+// Barang ber-QR atau tidak, sesuai jenis PO (Campur: dari centang baris)
+function rowQR(row) {
+  const j = formJenis();
+  return j === 'PRODUKSI' ? true : j === 'TANPA_QR' ? false : $('.i-qr', row).checked;
+}
+function syncRowQR(row) {
+  const qr = rowQR(row);
+  row.classList.toggle('noqr', !qr);
+  $('.i-warna', row).placeholder = qr ? 'Ketik / pilih' : '(opsional)';
+  $('.i-size', row).placeholder = qr ? 'Ketik / pilih' : '(opsional)';
+  $('.i-qty', row).inputMode = qr ? 'numeric' : 'decimal';
+}
 function itemRow(it = {}) {
   const sc = Number(it.qtyScanned) || 0;
-  return `<div class="irow" data-scanned="${sc}">
-    <label class="f"><span>Deskripsi barang</span><input class="input i-desc" value="${esc(it.deskripsi)}" placeholder="COVERALL FRC…" ${sc ? 'readonly' : ''}></label>
-    <label class="f"><span>Warna</span><input class="input i-warna" list="dlWarna" value="${esc(it.warna)}" placeholder="Ketik / pilih" autocomplete="off" ${sc ? 'readonly' : ''}></label>
-    <label class="f"><span>Ukuran</span><input class="input i-size" list="dlUkuran" value="${esc(it.ukuran)}" placeholder="Ketik / pilih" autocomplete="off" ${sc ? 'readonly' : ''}></label>
-    <label class="f q"><span>QTY target</span><input class="input i-qty num" type="number" inputmode="numeric" min="${Math.max(1, sc)}" value="${esc(it.qtyTarget)}" placeholder="0"></label>
+  const kirim = it.pakaiQr === false ? Number(it.qtyKirim) || 0 : 0;   // barang tanpa QR yang sudah dikirim
+  const qr = it.pakaiQr !== false;
+  const lockQR = sc > 0 || kirim > 0;
+  return `<div class="irow" data-scanned="${sc}" data-kirim="${kirim}">
+    <label class="f"><span>Deskripsi barang</span><input class="input i-desc" value="${esc(it.deskripsi)}" placeholder="COVERALL FRC… / BENANG…" ${lockQR ? 'readonly' : ''}></label>
+    <label class="f"><span>Warna</span><input class="input i-warna" list="dlWarna" value="${esc(it.warna)}" placeholder="Ketik / pilih" autocomplete="off" ${lockQR ? 'readonly' : ''}></label>
+    <label class="f"><span>Ukuran</span><input class="input i-size" list="dlUkuran" value="${esc(it.ukuran)}" placeholder="Ketik / pilih" autocomplete="off" ${lockQR ? 'readonly' : ''}></label>
+    <label class="f q"><span>QTY target</span><input class="input i-qty num" type="text" inputmode="numeric" value="${it.qtyTarget != null && it.qtyTarget !== '' ? esc(String(it.qtyTarget).replace('.', ',')) : ''}" placeholder="0" autocomplete="off"></label>
     <label class="f unit"><span>Satuan</span><select class="input i-unit" title="Satuan ukur (kode Coretax)">${unitOptions(it.satuan)}</select></label>
     <label class="f price"><span>Harga satuan</span><div class="rp"><input class="input i-price num" inputmode="decimal" value="${Number(it.harga) ? esc(fmtPrice(it.harga)) : ''}" placeholder="0" autocomplete="off"></div></label>
-    <button type="button" class="btn icon t-bad" data-del-row aria-label="Hapus baris" ${sc ? 'disabled title="Sudah ada scan — tidak bisa dihapus"' : ''}><i class="fa-solid fa-trash"></i></button>
+    <button type="button" class="btn icon t-bad" data-del-row aria-label="Hapus baris" ${lockQR ? `disabled title="Sudah ${sc ? 'ada scan' : 'dikirim'} — tidak bisa dihapus"` : ''}><i class="fa-solid fa-trash"></i></button>
+    <label class="qr-tog"><input type="checkbox" class="i-qr" ${qr ? 'checked' : ''} ${lockQR ? 'disabled' : ''}><span><i class="fa-solid fa-qrcode"></i> Pakai QR (di-scan)</span></label>
     <div class="amt num"></div>
     ${sc ? `<small class="irow-note"><i class="fa-solid fa-lock"></i> ${fmt(sc)} pcs sudah ter-scan — spesifikasi dikunci, QTY minimal ${fmt(sc)}. Harga tetap bisa diubah.</small>` : ''}
+    ${kirim ? `<small class="irow-note"><i class="fa-solid fa-lock"></i> ${qtyText(kirim)} sudah dikirim — spesifikasi dikunci, QTY minimal ${qtyText(kirim)}. Harga tetap bisa diubah.</small>` : ''}
   </div>`;
 }
 /** "665.000" / "665000" / "1.250,50" -> 665000 / 1250.5. Kosong -> 0. Tidak valid -> NaN. */
@@ -2033,9 +2119,10 @@ function addItemRow(it, focus) {
   if (!it) { // baris baru mewarisi deskripsi, warna, satuan & harga baris terakhir: biasanya hanya ukuran yang berbeda
     const last = $('#formItems .irow:last-child');
     it = last ? { deskripsi: $('.i-desc', last).value, warna: $('.i-warna', last).value, satuan: $('.i-unit', last).value,
-                  harga: parsePrice($('.i-price', last).value) || 0 } : {};
+                  harga: parsePrice($('.i-price', last).value) || 0, pakaiQr: $('.i-qr', last).checked } : {};
   }
   $('#formItems').insertAdjacentHTML('beforeend', itemRow(it));
+  syncRowQR($('#formItems .irow:last-child'));
   updateFormTotal();
   if (focus) { const row = $('#formItems .irow:last-child'); $(it.deskripsi ? '.i-size' : '.i-desc', row).focus(); }
 }
@@ -2043,11 +2130,11 @@ function updateFormTotal() {
   const rows = $$('#formItems .irow');
   let total = 0, nilai = 0;
   rows.forEach(r => {
-    const q = parseInt($('.i-qty', r).value, 10) || 0, h = parsePrice($('.i-price', r).value) || 0;
-    total += q; nilai += q * h;
-    $('.amt', r).innerHTML = q && h ? `${fmt(q)} ${esc(unitName($('.i-unit', r).value))} × ${fmtPrice(h)}<b>${rupiah(q * h)}</b>` : '';
+    const q = parseQty($('.i-qty', r).value) || 0, h = parsePrice($('.i-price', r).value) || 0;
+    total += q; nilai += Math.round(q * h * 100) / 100;
+    $('.amt', r).innerHTML = q && h ? `${qtyText(q)} ${esc(unitName($('.i-unit', r).value))} × ${fmtPrice(h)}<b>${rupiah(q * h)}</b>` : '';
   });
-  $('#formTotal').textContent = `${rows.length} baris · ${fmt(total)} pcs` + (nilai ? ` · ${rupiah(nilai)}` : '');
+  $('#formTotal').textContent = `${rows.length} baris · ${qtyText(total)} ${formJenis() === 'PRODUKSI' ? 'pcs' : 'qty'}` + (nilai ? ` · ${rupiah(nilai)}` : '');
 }
 function resetForm() {
   state.formMode = 'new';
@@ -2059,6 +2146,7 @@ function resetForm() {
   $('#formSubmit span').textContent = 'Simpan Master PO';
   $('#btnCancelEdit').hidden = true;
   $('#formItems').innerHTML = '';
+  setFormJenis('PRODUKSI');
   addItemRow({});
   if (state.page === 'form') setTitle('Input PO Baru', PAGES.find(p => p.id === 'form').sub);
 }
@@ -2078,7 +2166,9 @@ async function startEdit(noPO, btn) {
   $('#formSubmit span').textContent = 'Simpan Perubahan';
   $('#btnCancelEdit').hidden = false;
   $('#formItems').innerHTML = '';
-  res.items.forEach(it => addItemRow({ deskripsi: it.deskripsi, warna: nameOf('warna', it.idWarna), ukuran: nameOf('ukuran', it.idUkuran), qtyTarget: it.qtyTarget, qtyScanned: it.qtyScanned,
+  setFormJenis(po.jenis || 'PRODUKSI');
+  res.items.forEach(it => addItemRow({ deskripsi: it.deskripsi, warna: it.idWarna ? nameOf('warna', it.idWarna) : '', ukuran: it.idUkuran ? nameOf('ukuran', it.idUkuran) : '',
+                                       qtyTarget: it.qtyTarget, qtyScanned: it.qtyScanned, qtyKirim: it.qtyKirim, pakaiQr: it.pakaiQr !== false,
                                        harga: it.harga, satuan: it.satuan }));
   if (!res.items.length) addItemRow({});
   go('form');
@@ -2090,17 +2180,22 @@ function collectForm() {
   need($('#fNoPO'), !!val('#fNoPO'));
   need($('#fPelanggan'), !!val('#fPelanggan'));
   need($('#fTglPO'), validDMY(val('#fTglPO')));
-  need($('#fMOP'), !!val('#fMOP'));
-  need($('#fTglProd'), validDMY(val('#fTglProd')));
+  const jenis = formJenis(), pakaiMOP = jenis !== 'TANPA_QR';
+  if (pakaiMOP) { need($('#fMOP'), !!val('#fMOP')); need($('#fTglProd'), validDMY(val('#fTglProd'))); }
   const seen = new Set();
-  let dup = false;
+  let dup = false, why = '';
   const items = $$('#formItems .irow').map(row => {
     const desc = $('.i-desc', row), warna = $('.i-warna', row), size = $('.i-size', row), qty = $('.i-qty', row), price = $('.i-price', row);
-    const min = Math.max(1, +row.dataset.scanned || 0), q = parseInt(qty.value, 10), h = parsePrice(price.value);
-    need(desc, !!desc.value.trim()); need(warna, !!warna.value.trim()); need(size, !!size.value.trim());
-    need(qty, q >= min); need(price, Number.isFinite(h) && h >= 0);
-    const item = { deskripsi: desc.value.trim(), idWarna: idOf('warna', warna.value), idUkuran: idOf('ukuran', size.value), qtyTarget: q,
-                   satuan: $('.i-unit', row).value, harga: Number.isFinite(h) ? h : 0 };
+    const qr = rowQR(row);
+    const min = qr ? Math.max(1, +row.dataset.scanned || 0) : Math.max(0.01, +row.dataset.kirim || 0);
+    const q = parseQty(qty.value), h = parsePrice(price.value);
+    need(desc, !!desc.value.trim());
+    if (qr) { need(warna, !!warna.value.trim()); need(size, !!size.value.trim()); }
+    if (!need(qty, Number.isFinite(q) && q >= min && (!qr || Number.isInteger(q))) && !why)
+      why = qr ? 'QTY barang ber-QR harus bilangan bulat.' : 'QTY tidak valid (boleh desimal, maks. 2 angka di belakang koma).';
+    need(price, Number.isFinite(h) && h >= 0);
+    const item = { deskripsi: desc.value.trim(), idWarna: warna.value.trim() ? idOf('warna', warna.value) : '', idUkuran: size.value.trim() ? idOf('ukuran', size.value) : '',
+                   qtyTarget: Number.isFinite(q) ? String(q) : '', pakaiQr: qr, satuan: $('.i-unit', row).value, harga: Number.isFinite(h) ? h : 0 };
     const key = [item.deskripsi, item.idWarna, item.idUkuran].join('|').toLowerCase();
     if (seen.has(key) && item.deskripsi) { dup = true; need(size, false); }
     seen.add(key);
@@ -2108,9 +2203,12 @@ function collectForm() {
   });
   if (firstBad) {
     firstBad.focus(); firstBad.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    throw new Error(dup ? 'Ada baris item duplikat (deskripsi, warna, dan ukuran sama).' : 'Lengkapi kolom yang ditandai merah.');
+    throw new Error(dup ? 'Ada baris item duplikat (deskripsi, warna, dan ukuran sama).' : why || 'Lengkapi kolom yang ditandai merah.');
   }
-  return { noPO: val('#fNoPO'), idPelanggan: idOf('pelanggan', val('#fPelanggan')), tglPO: val('#fTglPO'), mop: val('#fMOP'), tglProduksi: val('#fTglProd'), items };
+  if (jenis === 'CAMPUR' && (items.every(i => i.pakaiQr) || items.every(i => !i.pakaiQr)))
+    throw new Error('PO Campur harus berisi barang ber-QR dan barang tanpa QR. Bila semuanya sama, pilih jenis Produksi atau Tanpa QR.');
+  return { noPO: val('#fNoPO'), idPelanggan: idOf('pelanggan', val('#fPelanggan')), tglPO: val('#fTglPO'), jenis,
+           mop: pakaiMOP ? val('#fMOP') : '', tglProduksi: pakaiMOP ? val('#fTglProd') : '', items };
 }
 async function submitForm(e) {
   e.preventDefault();
@@ -2348,7 +2446,14 @@ function bind() {
   $('#formItems').addEventListener('input', e => {
     const el = e.target, row = el.closest('.irow');
     el.classList.remove('invalid');
+    if (el.matches('.i-qr')) { syncRowQR(row); $$('.invalid', row).forEach(x => x.classList.remove('invalid')); }
     if (el.matches('.i-qty, .i-price, .i-unit')) updateFormTotal();
+  });
+  $('#fJenis').addEventListener('click', e => {
+    const b = e.target.closest('[data-jenis]');
+    if (!b || b.disabled) return;
+    setFormJenis(b.dataset.jenis);
+    $$('#poForm .invalid').forEach(el => el.classList.remove('invalid'));
   });
   $('#formItems').addEventListener('focusout', e => {
     const el = e.target;
